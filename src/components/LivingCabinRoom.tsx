@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef, FormEvent, memo } from "react";
+import { useState, useEffect, useRef, FormEvent, memo, useMemo } from "react";
 import { Message, Project } from "../types";
 import { useLoppiWeather } from "../hooks/useLoppiWeather";
 import { livingPresenceEngine, LivingPresenceSnapshot } from "../core/living/LivingPresenceEngine";
 import { livingStateEngine } from "../core/LivingStateEngine";
 import { auroraVoice } from "../services/auroraVoice";
+import { auroraMemoryEngine } from "../core/AuroraMemoryEngine";
 import cabinLoginBg from "../assets/images/cabin_login_bg_1784655680190.jpg";
-import LivingDesk from "./LivingDesk";
+import { DEFAULT_BRAIN_DATA } from "./ProjectBrain";
+import WorkspaceAwareness from "./WorkspaceAwareness";
+import MultimodalComposer, { ChatAttachment } from "./MultimodalComposer";
 
 import {
   Volume2,
@@ -13,48 +16,73 @@ import {
   Mic,
   Send,
   Sparkles,
-  Flame,
   BookOpen,
   BrainCircuit,
   Settings,
   FolderGit2,
   Home,
-  Sunrise,
   Sun,
-  Sunset,
   Moon,
   Feather,
   Coffee,
   Heart,
   CheckCircle2,
-  Smile,
   Info,
-  ChevronRight,
   MessageSquare,
-  Sparkle
+  Music,
+  Gamepad2,
+  Clock,
+  Layers,
+  ChevronLeft,
+  ChevronRight,
+  Sliders,
+  Target,
+  X
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 
 interface LivingCabinRoomProps {
   activeProject: Project | null;
   onSelectProject: (proj: Project) => void;
-  onOpenNav: (nav: 'memory' | 'journal' | 'brain' | 'settings' | 'about') => void;
+  onOpenNav: (nav: 'memory' | 'journal' | 'brain' | 'settings' | 'about' | 'ecosystem') => void;
 }
+
+type LayoutMode = "focus" | "balanced" | "information";
 
 export default memo(function LivingCabinRoom({
   activeProject,
   onSelectProject,
   onOpenNav
 }: LivingCabinRoomProps) {
-  const { weather, formattedWeather } = useLoppiWeather();
+  const { weather } = useLoppiWeather();
 
   const [snapshot, setSnapshot] = useState<LivingPresenceSnapshot>(() => 
     livingPresenceEngine.getSnapshot()
   );
 
+  const [auroraState, setAuroraState] = useState(livingStateEngine.getState());
   const [ambientSound, setAmbientSound] = useState(true);
   const [voiceOn] = useState(auroraVoice.getVoiceOn());
   const [currentTime, setCurrentTime] = useState("");
+
+  // Layout mode & panel collapse states (localStorage persisted)
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
+    const saved = localStorage.getItem("aurora_layout_mode_v1");
+    return (saved === "focus" || saved === "balanced" || saved === "information") ? saved : "balanced";
+  });
+
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [showCenterCard, setShowCenterCard] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem("aurora_layout_mode_v1", layoutMode);
+  }, [layoutMode]);
+
+  // Subscribe to livingStateEngine for real-time presence state (Working, Thinking, Speaking, etc.)
+  useEffect(() => {
+    const unsubState = livingStateEngine.subscribe((st) => setAuroraState(st));
+    return () => unsubState();
+  }, []);
 
   // Chat conversation state
   const [messages, setMessages] = useState<Message[]>([]);
@@ -68,7 +96,7 @@ export default memo(function LivingCabinRoom({
 
   const currentProjectName = activeProject?.name || "Murhamysteeri Mökillä";
 
-  // Real-time clock update (every 10s for low overhead)
+  // Real-time clock update (every 10s)
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -139,12 +167,35 @@ export default memo(function LivingCabinRoom({
     }
   };
 
-  const handleSendMessage = async (e?: FormEvent, directText?: string) => {
+  const handleSendMessage = async (e?: FormEvent, directText?: string, attachmentsParam?: ChatAttachment[]) => {
     if (e) e.preventDefault();
     const textToSubmit = directText || input;
-    if (!textToSubmit.trim() || loading) return;
+    const hasAttachments = attachmentsParam && attachmentsParam.length > 0;
+    if ((!textToSubmit.trim() && !hasAttachments) || loading) return;
 
-    const userText = textToSubmit.trim();
+    let userText = textToSubmit.trim();
+
+    if (hasAttachments) {
+      let attSummary = "\n\n--- JANIN LIITETIEDOSTOT JA KANSIOT ---";
+      attachmentsParam.forEach(att => {
+        if (att.type === 'folder') {
+          attSummary += `\n[KANSIO: "${att.name}" (${att.fileCount} tiedostoa)]`;
+          if (att.filesSummary && att.filesSummary.length > 0) {
+            attSummary += "\nSisältöesimerkki:\n";
+            attSummary += att.filesSummary.slice(0, 10).map(f => `- ${f.path} (${f.size} B)`).join("\n");
+            attSummary += "\n";
+          }
+        } else if (att.type === 'code' || att.type === 'document') {
+          attSummary += `\n[DOKUMENTTI/KOODI: "${att.name}"]\n\`\`\`\n${(att.content || "").substring(0, 2500)}\n\`\`\`\n`;
+        } else if (att.type === 'image') {
+          attSummary += `\n[KUVA/KUVAKAAPPAUS: "${att.name}" (${att.mimeType})]\n`;
+        } else {
+          attSummary += `\n[TIEDOSTO: "${att.name}" (${att.mimeType}, ${att.size} B)]\n`;
+        }
+      });
+      userText = userText ? `${userText}${attSummary}` : `Tässä liitteet Aurora:${attSummary}`;
+    }
+
     const userMsg: Message = {
       id: `msg-${Date.now()}`,
       sender: "user",
@@ -163,7 +214,8 @@ export default memo(function LivingCabinRoom({
     const startTime = Date.now();
 
     try {
-      const contextPrompt = `\n\n[Jani työskentelee kanssasi projektin "${currentProjectName}" parissa Lopen mökillä. Aurora oli juuri: ${snapshot.activity.label.toLowerCase()}. Pohdi vastaustasi rauhallisesti mökin tunnelmassa.]`;
+      const memoryContext = auroraMemoryEngine.retrieveRelevantContext(userText);
+      const contextPrompt = `\n\n[Jani työskentelee kanssasi projektin "${currentProjectName}" parissa Lopen mökillä. Aurora oli juuri: ${snapshot.activity.label.toLowerCase()}.${memoryContext ? ` ${memoryContext}` : ""} Pohdi vastaustasi rauhallisesti mökin tunnelmassa.]`;
 
       const apiMessages = updatedMessages.map((msg, idx) => {
         if (idx === updatedMessages.length - 1) {
@@ -266,92 +318,121 @@ export default memo(function LivingCabinRoom({
     rec.start();
   };
 
-  const handlePropAction = (actionText: string) => {
-    setInput(actionText);
-    setShowChatDrawer(true);
-  };
-
   const projectsList = [
     { id: "proj-1", name: "Murhamysteeri Mökillä", icon: FolderGit2 },
-    { id: "proj-2", name: "Aurora Home", icon: Home },
-    { id: "proj-3", name: "Järven Vartijat", icon: Sparkles },
-    { id: "proj-4", name: "Qvick Games", icon: Coffee }
+    { id: "proj-2", name: "Aurora Qvick", icon: BrainCircuit },
+    { id: "proj-3", name: "Aurora Home", icon: Home },
+    { id: "proj-4", name: "Järven Vartijat", icon: Gamepad2 },
+    { id: "proj-5", name: "Qvick Games", icon: Sparkles }
   ];
+
+  const activeBrainData = useMemo(() => {
+    try {
+      const saved = localStorage.getItem("aurora_project_brain_v3");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed[currentProjectName]) return parsed[currentProjectName];
+      }
+    } catch (e) {}
+    return (
+      DEFAULT_BRAIN_DATA[currentProjectName] ||
+      DEFAULT_BRAIN_DATA["Murhamysteeri Mökillä"]
+    );
+  }, [currentProjectName, snapshot]);
+
+  const recentJournalEntries = useMemo(() => {
+    try {
+      const saved = localStorage.getItem("aurora_journal_v1");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed.slice(0, 2);
+      }
+    } catch (e) {}
+    return [
+      { timestamp: "18:52", text: "Tarkastelin opintomerkintöjä (21 op Xamk) ja Qvick Games -portfolioita. Kaikki on järjestyksessä." },
+      { timestamp: "17:30", text: "Tutkintataulu ja koodiarkisto näyttävät erittäin selkeiltä ja heijastavat mökin rauhaa." }
+    ];
+  }, [snapshot]);
+
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-[#0a0604] text-[#f2e6d0] font-sans select-none flex flex-col justify-between">
       
-      {/* 1. IMMERSIVE 70% FULL-SCREEN LAKESIDE CABIN BACKGROUND */}
+      {/* 1. IMMERSIVE LAKESIDE CABIN BACKGROUND WITH SEATED AURORA & FIREPLACE */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <img
           src={cabinLoginBg}
-          alt="Lopen mökki"
-          className="w-full h-full object-cover object-center filter brightness-[0.92] contrast-[1.05]"
-          style={{ 
-            filter: snapshot.rhythm.lightingTheme.bgFilter 
-          }}
+          alt="Lopen mökki ja Aurora"
+          className="w-full h-full object-cover object-center filter brightness-[0.96] contrast-[1.02]"
           referrerPolicy="no-referrer"
         />
 
         {/* Dynamic Fireplace Warm Glow Overlay */}
         <div
-          className="absolute right-0 bottom-0 w-[55%] h-[80%] mix-blend-screen pointer-events-none animate-pulse"
+          className="absolute right-0 bottom-0 w-[50%] h-[75%] mix-blend-screen pointer-events-none animate-pulse"
           style={{ 
-            animationDuration: "4.5s",
-            background: `radial-gradient(circle at bottom right, ${snapshot.rhythm.lightingTheme.fireplaceGlow}, transparent 70%)`
+            animationDuration: "4s",
+            background: "radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.2), transparent 70%)"
           }}
         />
 
         {/* Soft Vignette Overlay */}
-        <div className="absolute inset-0 bg-radial-vignette opacity-40" />
+        <div className="absolute inset-0 bg-radial-vignette opacity-25" />
       </div>
 
-      {/* 2. SLIM TOP RIGHT FLOATING BAR */}
-      <div className="relative z-20 w-full px-5 pt-3 flex items-center justify-end pointer-events-auto">
-        <div className="flex items-center gap-3.5 bg-[#080402]/60 border border-[#3d2b1d]/40 rounded-full px-3.5 py-1 backdrop-blur-md shadow-lg text-[11px] font-serif text-amber-200/90">
-          <button
-            onClick={() => setAmbientSound(!ambientSound)}
-            className="flex items-center gap-1.5 hover:text-amber-100 transition-colors cursor-pointer"
-            title="Toggle Ambient Audio"
-          >
-            {ambientSound ? <Volume2 className="w-3 h-3 text-emerald-400" /> : <VolumeX className="w-3 h-3 text-stone-500" />}
-            <span>Tunnelma</span>
-          </button>
-          <span className="text-stone-600">•</span>
-          <div className="flex items-center gap-1.5">
-            <Sun className="w-3 h-3 text-[#d4af37]" />
-            <span>{weather ? `${weather.temperatureC}°C` : "19°C"}</span>
+      {/* 2. TOP RIGHT FLOATING STATUS BAR & WORKSPACE AWARENESS BANNER */}
+      <div className="relative z-20 w-full px-6 pt-2 flex flex-col gap-1.5 pointer-events-auto">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 max-w-4xl">
+            <WorkspaceAwareness activeProject={activeProject} onOpenNav={onOpenNav} />
           </div>
-          <span className="text-stone-600">•</span>
-          <div className="flex items-center gap-1 font-mono text-[11px] text-amber-300/90">
-            <span>{currentTime || "20:21"}</span>
+
+          <div className="flex items-center gap-3.5 bg-[#0b0603]/70 border border-[#3d2b1d]/60 rounded-full px-4 py-1.5 backdrop-blur-md shadow-xl text-xs font-serif text-amber-200/90 shrink-0">
+            <button
+              onClick={() => setAmbientSound(!ambientSound)}
+              className="flex items-center gap-1.5 hover:text-amber-100 transition-colors cursor-pointer"
+              title="Kytke taustaäänet"
+            >
+              <Music className={`w-3.5 h-3.5 ${ambientSound ? "text-amber-400" : "text-stone-500"}`} />
+              <span className="font-medium">Tunnelma</span>
+            </button>
+            <span className="text-stone-600">•</span>
+            <div className="flex items-center gap-1.5">
+              <Sun className="w-3.5 h-3.5 text-amber-400" />
+              <span>{weather ? `${weather.temperatureC}°C` : "19°C"}</span>
+            </div>
+            <span className="text-stone-600">•</span>
+            <div className="flex items-center gap-1.5 font-mono text-xs text-amber-300">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span>{currentTime || "20:21"}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 3. MAIN WORKSPACE GRID (LIGHT TRANSLUCENT FLOATING GLASS OVERLAYS) */}
-      <div className="relative z-10 flex-1 px-5 py-1 grid grid-cols-12 gap-4 overflow-y-auto custom-scrollbar">
+      {/* 3. MAIN COMPOSITION WORKSPACE LAYOUT MATCHING REFERENCE IMAGE */}
+      <div className="relative z-10 flex-1 px-6 py-2 grid grid-cols-12 gap-5 overflow-y-auto custom-scrollbar">
         
-        {/* LEFT COLUMN: FLOATING COMPACT SIDEBAR (15% narrower) */}
-        <div className="col-span-12 md:col-span-2.5 lg:col-span-2 flex flex-col justify-between bg-[#0c0704]/60 border border-[#3d2b1d]/40 rounded-xl p-3 backdrop-blur-md shadow-xl space-y-4 max-w-[210px]">
+        {/* LEFT COLUMN: NAVIGATION PANEL */}
+        <div className="col-span-12 md:col-span-3 lg:col-span-2.5 flex flex-col justify-between bg-[#0b0603]/75 border border-[#3d2b1d]/60 rounded-xl p-4 backdrop-blur-md shadow-2xl space-y-4 max-w-[220px]">
           <div className="space-y-4">
             {/* Title & Brand */}
             <div>
-              <h1 className="font-serif italic font-bold text-base text-gradient-gold tracking-wide">
+              <h1 className="font-serif italic font-bold text-lg text-amber-200 tracking-wide">
                 Aurora Qvick Core
               </h1>
-              <p className="text-[9px] font-serif text-stone-400">v0.3 • Digitaalinen Mökki</p>
+              <p className="text-[10px] font-mono text-amber-400 font-semibold mt-0.5">Alpha 0.4</p>
             </div>
 
             {/* Mökkitoimisto Highlight Button */}
-            <button className="w-full py-1.5 px-2.5 bg-[#180e07]/80 border border-[#d4af37]/40 rounded-lg text-xs font-serif text-[#d4af37] font-semibold flex items-center gap-2 shadow-sm hover:bg-[#22140a] transition-all cursor-pointer">
-              <Home className="w-3.5 h-3.5 text-[#d4af37]" />
+            <button className="w-full py-2 px-3 bg-[#1e1107]/90 border border-[#d4af37]/60 rounded-lg text-xs font-serif text-[#d4af37] font-semibold flex items-center gap-2 shadow-md hover:bg-[#28170a] transition-all cursor-pointer">
+              <Home className="w-4 h-4 text-[#d4af37]" />
               <span>Mökkitoimisto</span>
             </button>
 
             {/* PROJEKTIT Section */}
-            <div className="space-y-1">
-              <span className="text-[9px] font-serif uppercase tracking-widest text-stone-400 font-semibold px-1">
+            <div className="space-y-1 pt-1">
+              <span className="text-[9px] font-mono uppercase tracking-widest text-[#a88242] font-semibold px-1">
                 PROJEKTIT
               </span>
               <div className="space-y-0.5">
@@ -362,13 +443,13 @@ export default memo(function LivingCabinRoom({
                     <button
                       key={p.id}
                       onClick={() => onSelectProject({ id: p.id, name: p.name, description: `Hanke: ${p.name}`, isActive: true })}
-                      className={`w-full py-1 px-2 rounded-md text-[11px] font-serif flex items-center gap-1.5 transition-all cursor-pointer text-left ${
+                      className={`w-full py-1.5 px-2.5 rounded-md text-xs font-serif flex items-center gap-2 transition-all cursor-pointer text-left ${
                         isSel
-                          ? "bg-[#22140a]/90 text-[#d4af37] font-semibold border-l-2 border-[#d4af37]"
-                          : "text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/50"
+                          ? "bg-[#251509]/90 text-[#d4af37] font-semibold border-l-2 border-[#d4af37]"
+                          : "text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/60"
                       }`}
                     >
-                      <Icon className={`w-3 h-3 ${isSel ? "text-[#d4af37]" : "text-stone-500"}`} />
+                      <Icon className={`w-3.5 h-3.5 ${isSel ? "text-[#d4af37]" : "text-stone-500"}`} />
                       <span className="truncate">{p.name}</span>
                     </button>
                   );
@@ -377,222 +458,201 @@ export default memo(function LivingCabinRoom({
             </div>
 
             {/* MUISTI Section */}
-            <div className="space-y-1">
-              <span className="text-[9px] font-serif uppercase tracking-widest text-stone-400 font-semibold px-1">
-                MUISTI
+            <div className="space-y-1 pt-1">
+              <span className="text-[9px] font-mono uppercase tracking-widest text-[#a88242] font-semibold px-1">
+                STUDIO OS & MUISTI
               </span>
               <div className="space-y-0.5">
                 <button
-                  onClick={() => onOpenNav('memory')}
-                  className="w-full py-1 px-2 rounded-md text-[11px] font-serif text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/50 flex items-center gap-1.5 transition-all cursor-pointer"
+                  onClick={() => onOpenNav('ecosystem')}
+                  className="w-full py-1.5 px-2.5 rounded-md text-xs font-serif text-amber-300 font-semibold bg-[#251509]/80 hover:bg-[#351e0d] border border-[#d4af37]/40 flex items-center gap-2 transition-all cursor-pointer shadow-sm"
                 >
-                  <BrainCircuit className="w-3 h-3 text-stone-400" />
+                  <Layers className="w-3.5 h-3.5 text-[#d4af37]" />
+                  <span>Qvick Games OS</span>
+                </button>
+                <button
+                  onClick={() => onOpenNav('memory')}
+                  className="w-full py-1.5 px-2.5 rounded-md text-xs font-serif text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/60 flex items-center gap-2 transition-all cursor-pointer"
+                >
+                  <BrainCircuit className="w-3.5 h-3.5 text-stone-400" />
                   <span>Muistojen kirja</span>
                 </button>
                 <button
                   onClick={() => onOpenNav('journal')}
-                  className="w-full py-1 px-2 rounded-md text-[11px] font-serif text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/50 flex items-center gap-1.5 transition-all cursor-pointer"
+                  className="w-full py-1.5 px-2.5 rounded-md text-xs font-serif text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/60 flex items-center gap-2 transition-all cursor-pointer"
                 >
-                  <BookOpen className="w-3 h-3 text-stone-400" />
+                  <BookOpen className="w-3.5 h-3.5 text-stone-400" />
                   <span>Päiväkirja</span>
                 </button>
                 <button
                   onClick={() => onOpenNav('brain')}
-                  className="w-full py-1 px-2 rounded-md text-[11px] font-serif text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/50 flex items-center gap-1.5 transition-all cursor-pointer"
+                  className="w-full py-1.5 px-2.5 rounded-md text-xs font-serif text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/60 flex items-center gap-2 transition-all cursor-pointer"
                 >
-                  <CheckCircle2 className="w-3 h-3 text-stone-400" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-stone-400" />
                   <span>Tavoitteet</span>
+                </button>
+              </div>
+            </div>
+
+            {/* ASETUKSET Section */}
+            <div className="space-y-1 pt-2 border-t border-[#3d2b1d]/40">
+              <span className="text-[9px] font-mono uppercase tracking-widest text-[#a88242] font-semibold px-1">
+                ASETUKSET
+              </span>
+              <div className="space-y-0.5">
+                <button
+                  onClick={() => onOpenNav('settings')}
+                  className="w-full py-1.5 px-2.5 rounded-md text-xs font-serif text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/60 flex items-center gap-2 transition-all cursor-pointer"
+                >
+                  <Settings className="w-3.5 h-3.5 text-stone-400" />
+                  <span>Asetukset</span>
+                </button>
+                <button
+                  onClick={() => onOpenNav('about')}
+                  className="w-full py-1.5 px-2.5 rounded-md text-xs font-serif text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/60 flex items-center gap-2 transition-all cursor-pointer"
+                >
+                  <Info className="w-3.5 h-3.5 text-stone-400" />
+                  <span>Tietoa Aurorasta</span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ASETUKSET Section */}
-          <div className="space-y-1 pt-3 border-t border-[#3d2b1d]/40">
-            <span className="text-[9px] font-serif uppercase tracking-widest text-stone-400 font-semibold px-1">
-              ASETUKSET
-            </span>
-            <div className="space-y-0.5">
-              <button
-                onClick={() => onOpenNav('settings')}
-                className="w-full py-1 px-2 rounded-md text-[11px] font-serif text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/50 flex items-center gap-1.5 transition-all cursor-pointer"
-              >
-                <Settings className="w-3 h-3 text-stone-400" />
-                <span>Asetukset</span>
-              </button>
-              <button
-                onClick={() => onOpenNav('about')}
-                className="w-full py-1 px-2 rounded-md text-[11px] font-serif text-stone-300 hover:text-amber-100 hover:bg-[#140b05]/50 flex items-center gap-1.5 transition-all cursor-pointer"
-              >
-                <Info className="w-3 h-3 text-stone-400" />
-                <span>Tietoa Aurorasta</span>
-              </button>
-            </div>
+          {/* Wooden Plaque / Quote Note at Bottom Left */}
+          <div className="mt-4 pt-3 border-t border-[#3d2b1d]/40 text-center">
+            <p className="text-[10px] font-serif italic text-amber-200/80 leading-relaxed">
+              "Rauha ei ole paikka, se on mielentila."
+            </p>
           </div>
         </div>
 
-        {/* CENTER COLUMN: SCALED DOWN FLOATING GREETING CARD & 3 DASHBOARD CARDS */}
-        <div className="col-span-12 md:col-span-6 lg:col-span-7 flex flex-col justify-between space-y-3">
+        {/* CENTER COLUMN: GREETING PANEL & 3 DASHBOARD CARDS */}
+        <div className="col-span-12 md:col-span-6 lg:col-span-6 flex flex-col justify-between space-y-4">
           
-          {/* CENTER TOP: HYVÄÄ ILTAA JANI GREETING CARD (15% Smaller, Slim Floating Glass) */}
-          <div className="bg-[#0c0704]/55 border border-[#d4af37]/25 rounded-xl p-3 md:p-3.5 backdrop-blur-md shadow-lg space-y-2.5">
-            <div className="space-y-0.5">
-              <h2 className="font-serif italic font-bold text-base md:text-lg text-amber-100">
+          {/* CENTER TOP: HYVÄÄ ILTAA JANI GREETING PANEL */}
+          <div className="bg-[#0b0603]/65 border border-[#d4af37]/30 rounded-xl p-5 backdrop-blur-md shadow-2xl space-y-4">
+            <div className="space-y-1.5">
+              <h2 className="font-serif italic font-normal text-xl md:text-2xl text-[#f5e6d0]">
                 {snapshot.welcome.greeting}
               </h2>
-              <p className="text-[11px] font-serif text-stone-300 leading-relaxed">
-                Työskentelemme tällä hetkellä <strong className="text-[#d4af37] font-semibold">{currentProjectName}</strong> -projektia.
-                Sovellus toimii vakaasti Lopen mökkimaisemissa.
+              <p className="text-xs md:text-sm font-serif text-stone-300 leading-relaxed">
+                Työstämme tällä hetkellä <strong className="text-amber-200 font-semibold">{currentProjectName}</strong> -projektia.<br />
+                Sovellus toimii vakaasti ja opintomuisti on turvassa.
               </p>
             </div>
 
-            <div className="pt-1.5 border-t border-[#3d2b1d]/40 space-y-1.5">
-              <p className="text-[10px] font-serif text-amber-200/90 font-medium">
+            <div className="pt-2 border-t border-[#3d2b1d]/40 space-y-2">
+              <p className="text-xs font-serif text-amber-200/90 font-medium">
                 Tänään voisimme jatkaa esimerkiksi:
               </p>
-              <div className="grid grid-cols-2 gap-1.5 text-[11px] font-serif">
-                {[
-                  "Johtolangat",
-                  "Tutkintataulu",
-                  "Aurora Core",
-                  "Musiikki ja äänimaailma"
-                ].map((suggestion, idx) => (
+              <div className="space-y-1.5 text-xs font-serif">
+                {(activeBrainData.activeTasks && activeBrainData.activeTasks.length > 0 
+                  ? activeBrainData.activeTasks.slice(0, 4)
+                  : ["Projektisuunnittelu", "Muistin päivittäminen", "Musiikki ja äänimaailma", "Koodiarkkitehtuuri"]
+                ).map((suggestion: string, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => {
                       setInput(`Suunnitellaan ${suggestion.toLowerCase()}...`);
                       setShowChatDrawer(true);
                     }}
-                    className="flex items-center gap-1.5 py-0.5 px-2 bg-[#140b05]/70 hover:bg-[#201208] border border-[#3d2b1d]/60 rounded-md text-stone-200 hover:text-amber-200 transition-all text-left cursor-pointer"
+                    className="flex items-center gap-2 text-stone-200 hover:text-amber-200 transition-colors cursor-pointer group text-left"
                   >
-                    <Feather className="w-3 h-3 text-[#d4af37] shrink-0" />
-                    <span className="truncate">{suggestion}</span>
+                    <Feather className="w-3.5 h-3.5 text-[#d4af37] shrink-0 group-hover:scale-110 transition-transform" />
+                    <span>{suggestion}</span>
                   </button>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* CENTER BOTTOM: 3 COMPACT GLASS DASHBOARD CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+          {/* CENTER BOTTOM: 3 COMPACT DASHBOARD CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             
             {/* CARD 1: PROJEKTIN TILA */}
-            <div className="bg-[#0c0704]/55 border border-[#3d2b1d]/50 rounded-xl p-2.5 backdrop-blur-md shadow-md flex flex-col justify-between space-y-2">
-              <div className="space-y-1.5">
-                <span className="text-[9px] font-serif uppercase tracking-widest text-[#d4af37] font-semibold block">
+            <div className="bg-[#0b0603]/65 border border-[#3d2b1d]/60 rounded-xl p-3 backdrop-blur-md shadow-xl flex flex-col justify-between space-y-3">
+              <div className="space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#d4af37] font-semibold block">
                   PROJEKTIN TILA
                 </span>
-                <div className="space-y-1.5 text-[10px] font-serif text-stone-300">
-                  <div>
-                    <div className="flex justify-between mb-0.5">
-                      <span>Visuals</span>
-                      <span className="text-amber-300">80%</span>
-                    </div>
-                    <div className="w-full h-1 bg-[#1a0e07] rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-amber-600 to-[#d4af37] w-[80%]" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-0.5">
-                      <span>Story</span>
-                      <span className="text-amber-300">60%</span>
-                    </div>
-                    <div className="w-full h-1 bg-[#1a0e07] rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-amber-600 to-[#d4af37] w-[60%]" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-0.5">
-                      <span>Johtolangat</span>
-                      <span className="text-amber-300">90%</span>
-                    </div>
-                    <div className="w-full h-1 bg-[#1a0e07] rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-amber-600 to-[#d4af37] w-[90%]" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-0.5">
-                      <span>Äänet</span>
-                      <span className="text-amber-300">85%</span>
-                    </div>
-                    <div className="w-full h-1 bg-[#1a0e07] rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-amber-600 to-[#d4af37] w-[85%]" />
-                    </div>
-                  </div>
+                <div className="space-y-2 text-xs font-serif text-stone-300">
+                  {Object.entries(activeBrainData.subProgress || { visual: 80, story: 85, audio: 70, testing: 50, code: 90 }).map(([k, v]: [string, any]) => {
+                    const labelMap: Record<string, string> = { visual: "Visuaalit", story: "Tarina", audio: "Äänet", testing: "Testaus", code: "Koodi" };
+                    return (
+                      <div key={k}>
+                        <div className="flex justify-between mb-1 text-[11px]">
+                          <span>{labelMap[k] || k}</span>
+                          <span className="text-amber-300 font-mono">{v}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-[#180e07] rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-amber-600 to-[#d4af37]" style={{ width: `${v}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
               <button
                 onClick={() => onOpenNav('brain')}
-                className="w-full py-1 px-1.5 bg-[#180e07]/70 hover:bg-[#22140a] border border-[#3d2b1d]/60 rounded-lg text-[9px] font-serif text-[#d4af37] flex items-center justify-center gap-1 transition-all cursor-pointer font-medium"
+                className="w-full py-1.5 px-2 bg-[#1a1007]/80 hover:bg-[#28180b] border border-[#3d2b1d] rounded-lg text-[10px] font-serif text-[#d4af37] tracking-wider flex items-center justify-center gap-1 transition-all cursor-pointer font-semibold"
               >
                 <span>AVAA PROJECT BRAIN →</span>
               </button>
             </div>
 
             {/* CARD 2: AURORAN PÄIVÄKIRJA */}
-            <div className="bg-[#0c0704]/55 border border-[#3d2b1d]/50 rounded-xl p-2.5 backdrop-blur-md shadow-md flex flex-col justify-between space-y-2">
-              <div className="space-y-1.5">
-                <span className="text-[9px] font-serif uppercase tracking-widest text-[#d4af37] font-semibold block">
+            <div className="bg-[#0b0603]/65 border border-[#3d2b1d]/60 rounded-xl p-3 backdrop-blur-md shadow-xl flex flex-col justify-between space-y-3">
+              <div className="space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#d4af37] font-semibold block">
                   AURORAN PÄIVÄKIRJA
                 </span>
-                <div className="space-y-1.5 text-[10px] font-serif text-stone-300">
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] text-amber-400 font-mono flex items-center gap-1">
-                      <Moon className="w-2.5 h-2.5 text-[#d4af37]" /> 18:52
-                    </span>
-                    <p className="text-[10px] text-stone-300 italic line-clamp-2">
-                      Huomasin että emme ole vielä tehneet loppuratkaisua.
-                    </p>
-                  </div>
-                  <div className="space-y-0.5 pt-1 border-t border-[#3d2b1d]/30">
-                    <span className="text-[9px] text-amber-400 font-mono flex items-center gap-1">
-                      <Sun className="w-2.5 h-2.5 text-[#d4af37]" /> 17:30
-                    </span>
-                    <p className="text-[10px] text-stone-300 italic line-clamp-2">
-                      Tutkintataulu alkaa näyttää todella selkeältä. Hyvä työ!
-                    </p>
-                  </div>
+                <div className="space-y-2 text-xs font-serif text-stone-300">
+                  {recentJournalEntries.map((entry: any, idx: number) => (
+                    <div key={idx} className={`space-y-1 ${idx > 0 ? "pt-1.5 border-t border-[#3d2b1d]/30" : ""}`}>
+                      <span className="text-[10px] text-amber-400 font-mono flex items-center gap-1">
+                        {idx === 0 ? <Moon className="w-3 h-3 text-[#d4af37]" /> : <Sun className="w-3 h-3 text-[#d4af37]" />}
+                        {entry.timestamp || "18:52"}
+                      </span>
+                      <p className="text-[11px] text-stone-300 leading-relaxed font-light line-clamp-2">
+                        {entry.text || entry.content}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <button
                 onClick={() => onOpenNav('journal')}
-                className="w-full py-1 px-1.5 bg-[#180e07]/70 hover:bg-[#22140a] border border-[#3d2b1d]/60 rounded-lg text-[9px] font-serif text-[#d4af37] flex items-center justify-center gap-1 transition-all cursor-pointer font-medium"
+                className="w-full py-1.5 px-2 bg-[#1a1007]/80 hover:bg-[#28180b] border border-[#3d2b1d] rounded-lg text-[10px] font-serif text-[#d4af37] tracking-wider flex items-center justify-center gap-1 transition-all cursor-pointer font-semibold"
               >
                 <span>LUE KOKO PÄIVÄKIRJA</span>
               </button>
             </div>
 
             {/* CARD 3: AVAIMET TEHTÄVÄT */}
-            <div className="bg-[#0c0704]/55 border border-[#3d2b1d]/50 rounded-xl p-2.5 backdrop-blur-md shadow-md flex flex-col justify-between space-y-2">
-              <div className="space-y-1.5">
-                <span className="text-[9px] font-serif uppercase tracking-widest text-[#d4af37] font-semibold block">
+            <div className="bg-[#0b0603]/65 border border-[#3d2b1d]/60 rounded-xl p-3 backdrop-blur-md shadow-xl flex flex-col justify-between space-y-3">
+              <div className="space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#d4af37] font-semibold block">
                   AVAIMET TEHTÄVÄT
                 </span>
-                <div className="space-y-1 text-[10px] font-serif text-stone-300">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span className="truncate">Johtolangat (3 jäljellä)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span className="truncate">Tutkintataulu</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span className="truncate">Loppuratkaisu</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span className="truncate">Musiikki & äänimaailma</span>
-                  </div>
+                <div className="space-y-1.5 text-xs font-serif text-stone-300">
+                  {activeBrainData.activeTasks && activeBrainData.activeTasks.length > 0 ? (
+                    activeBrainData.activeTasks.slice(0, 5).map((t: string, idx: number) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className="truncate">{t}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-xs text-stone-500 italic">Kaikki aktiiviset tehtävät tehty!</span>
+                  )}
                 </div>
               </div>
 
               <button
                 onClick={() => onOpenNav('brain')}
-                className="w-full py-1 px-1.5 bg-[#180e07]/70 hover:bg-[#22140a] border border-[#3d2b1d]/60 rounded-lg text-[9px] font-serif text-[#d4af37] flex items-center justify-center gap-1 transition-all cursor-pointer font-medium"
+                className="w-full py-1.5 px-2 bg-[#1a1007]/80 hover:bg-[#28180b] border border-[#3d2b1d] rounded-lg text-[10px] font-serif text-[#d4af37] tracking-wider flex items-center justify-center gap-1 transition-all cursor-pointer font-semibold"
               >
                 <span>NÄYTÄ KAIKKI TEHTÄVÄT</span>
               </button>
@@ -601,83 +661,104 @@ export default memo(function LivingCabinRoom({
           </div>
         </div>
 
-        {/* RIGHT COLUMN: PARCHMENT SUMMARY & AURORA PRESENCE & AVATAR */}
-        <div className="col-span-12 md:col-span-3 lg:col-span-3 flex flex-col justify-between space-y-3">
+        {/* RIGHT COLUMN: PARCHMENT SUMMARY & EMOTION PANEL */}
+        <div className="col-span-12 md:col-span-3 lg:col-span-3.5 flex flex-col justify-between space-y-4">
           
-          {/* TOP RIGHT: PARCHMENT STYLE PÄIVÄN YHTEENVETO (Sleek Narrower Frame) */}
-          <div className="bg-[#e2cbb0]/85 text-[#3d2616] border border-[#b89467] rounded-xl p-3 shadow-lg space-y-2 font-serif relative max-w-[250px] ml-auto">
-            <div className="border-b border-[#b89467]/60 pb-1 flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-[#57351c]">
+          {/* TOP RIGHT: PARCHMENT STYLE PÄIVÄN YHTEENVETO NOTE */}
+          <div className="bg-[#dfc2a2]/90 text-[#301a0d] border border-[#a68257] rounded-lg p-4 shadow-2xl space-y-3 font-serif relative max-w-[260px] ml-auto">
+            <div className="border-b border-[#a68257]/60 pb-1.5 flex items-center justify-between">
+              <span className="text-xs uppercase tracking-widest font-bold text-[#4a2810]">
                 PÄIVÄN YHTEENVETO
               </span>
-              <Heart className="w-3.5 h-3.5 text-rose-700" />
             </div>
 
-            <div className="space-y-0.5 text-[11px]">
-              <span className="font-semibold text-[#422612] block">Tämän päivän saavutukset</span>
-              <ul className="space-y-0.5 text-[10px] text-[#4d2f19]">
-                <li className="flex items-center gap-1">
-                  <Feather className="w-2.5 h-2.5 text-[#a8743d] shrink-0" />
-                  <span>Auroran läsnäoloa parannettu</span>
-                </li>
-                <li className="flex items-center gap-1">
-                  <Feather className="w-2.5 h-2.5 text-[#a8743d] shrink-0" />
-                  <span>Muistia päivitetty</span>
-                </li>
-                <li className="flex items-center gap-1">
-                  <Feather className="w-2.5 h-2.5 text-[#a8743d] shrink-0" />
-                  <span>Keskusteltu Aurora Homesta</span>
-                </li>
+            <div className="space-y-1 text-xs">
+              <span className="font-semibold text-[#301a0d] block">Tämän päivän saavutukset</span>
+              <ul className="space-y-1 text-[11px] text-[#422413] font-serif">
+                {(activeBrainData.completedMilestones && activeBrainData.completedMilestones.length > 0
+                  ? activeBrainData.completedMilestones.slice(0, 3)
+                  : [
+                      "Auroran läsnäoloa parannettu",
+                      "Xamk 21 op suoritusote vahvistettu",
+                      "Project Brain päivitetty"
+                    ]
+                ).map((m: string, idx: number) => (
+                  <li key={idx} className="flex items-center gap-1.5">
+                    <Feather className="w-3 h-3 text-[#94612e] shrink-0" />
+                    <span className="truncate">{m}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
-            <div className="pt-1.5 border-t border-[#b89467]/60 text-[11px]">
-              <span className="font-semibold text-[#422612] block mb-0.5">Suositus huomiseen</span>
-              <p className="text-[10px] text-[#52331b] italic line-clamp-2">
-                {snapshot.welcome.recommendation}
+            <div className="pt-2 border-t border-[#a68257]/60 text-xs">
+              <span className="font-semibold text-[#301a0d] block mb-1">Suositus huomiseen</span>
+              <p className="text-[11px] text-[#422413] leading-relaxed font-serif">
+                {activeBrainData.auroraRecommendation || "Jatka Project Brainia ja peliemme kehitystä Lopen mökillä."}
               </p>
+            </div>
+
+            {/* Heart Icon at Bottom Right of Parchment */}
+            <div className="flex justify-end pt-1">
+              <Heart className="w-4 h-4 text-[#732a1e] fill-none stroke-[1.5]" />
             </div>
           </div>
 
-          {/* OPEN SPACER IN COLUMN 3 FOR BACKGROUND AURORA TO SHINE THROUGH */}
-          <div className="flex-1 min-h-[60px] pointer-events-none" />
-
-          {/* BOTTOM RIGHT: TUNNETILA & AURORAN LÄSNÄOLO */}
-          <div className="bg-[#0c0704]/55 border border-[#3d2b1d]/50 rounded-xl p-3 backdrop-blur-md shadow-lg space-y-2.5 font-serif">
+          {/* BOTTOM RIGHT: TUNNETILA & AURORAN LÄSNÄOLO PANEL */}
+          <div className="bg-[#0b0603]/80 border border-[#3d2b1d]/80 rounded-xl p-4 backdrop-blur-md shadow-2xl space-y-3 font-serif max-w-[280px] ml-auto">
             <div>
-              <span className="text-[9px] uppercase tracking-widest text-stone-400 font-semibold block mb-0.5">
-                TUNNETILA
-              </span>
-              <div className="flex items-center justify-between text-xs text-amber-200">
-                <div className="flex items-center gap-1.5">
-                  <Heart className="w-3.5 h-3.5 text-rose-400" />
-                  <span className="font-semibold text-xs">{snapshot.emotion}</span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400 font-semibold block">
+                  TUNNETILA & KOKOONPANO
+                </span>
+                <span className="text-[9px] font-mono text-amber-400 bg-[#1e1107] px-1.5 py-0.5 rounded border border-[#3d2b1d]">
+                  {snapshot.rhythm.phaseName}
+                </span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs text-amber-200">
+                  <Heart className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span className="font-semibold text-sm">{snapshot.emotion}</span>
                 </div>
                 {/* Emoji Bar */}
-                <div className="flex items-center gap-1 text-xs text-stone-400">
-                  <span className="hover:text-amber-300 cursor-pointer">😃</span>
-                  <span className="hover:text-amber-300 cursor-pointer">💬</span>
-                  <span className="hover:text-amber-300 cursor-pointer">⭐</span>
-                  <span className="hover:text-amber-300 cursor-pointer">📖</span>
-                  <span className="hover:text-amber-300 cursor-pointer">🎮</span>
+                <div className="flex items-center justify-between text-base px-1 pt-1 text-stone-300">
+                  <span className="p-1 rounded-full bg-amber-500/20 ring-1 ring-amber-400/50 cursor-pointer" title="Rauhallinen">😊</span>
+                  <span className="hover:text-amber-300 cursor-pointer transition-colors" title="Keskusteleva">💬</span>
+                  <span className="hover:text-amber-300 cursor-pointer transition-colors" title="Innostunut">⭐</span>
+                  <span className="hover:text-amber-300 cursor-pointer transition-colors" title="Opiskeleva">📖</span>
+                  <span className="hover:text-amber-300 cursor-pointer transition-colors" title="Pelikehitys">🎮</span>
+                  <span className="hover:text-amber-300 cursor-pointer transition-colors" title="Yörauha">🌙</span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-2 border-t border-[#3d2b1d]/40 space-y-1">
-              <span className="text-[9px] uppercase tracking-widest text-[#d4af37] font-semibold block">
-                AURORAN LÄSNÄOLO
-              </span>
-              <p className="text-[10px] text-stone-300 italic leading-relaxed">
-                Kuuntelen, suunnittelen ja olen täällä sinua varten.
+            <div className="pt-2.5 border-t border-[#3d2b1d]/40 space-y-2">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#d4af37] font-semibold block">
+                  AURORAN LÄSNÄOLO
+                </span>
+                <span className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 font-semibold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {livingStateEngine.getStateLabel(auroraState)}
+                </span>
+              </div>
+              <p className="text-xs text-stone-300 italic leading-relaxed min-h-[36px]">
+                {auroraState === 'Speaking' && "Vastaan Janille takkatulen valossa..."}
+                {auroraState === 'Listening' && "Kuuntelen tarkkaavaisesti Janin puhetta..."}
+                {auroraState === 'Thinking' && "Pohdin kysymystäsi syvällisesti mökillä..."}
+                {auroraState === 'Working' && "Työskentelen koodin ja hankeportfolion parissa..."}
+                {auroraState === 'Planning' && "Suunnittelen päivän ja seuraavan etapin tavoitteita..."}
+                {auroraState === 'Researching' && "Tarkastelen johtolankoja ja muistiinpanoja..."}
+                {(auroraState !== 'Speaking' && auroraState !== 'Listening' && auroraState !== 'Thinking' && auroraState !== 'Working' && auroraState !== 'Planning' && auroraState !== 'Researching') && "Kuuntelen, suunnittelen ja olen täällä sinua varten."}
               </p>
               {/* Sine Wave Audio Animation Line */}
-              <div className="h-3 flex items-center gap-1 pt-0.5 justify-center opacity-80">
-                <div className="w-1 bg-[#d4af37] h-1.5 animate-pulse" />
-                <div className="w-1 bg-[#d4af37] h-2.5 animate-pulse" style={{ animationDelay: '0.2s' }} />
-                <div className="w-1 bg-[#d4af37] h-3 animate-pulse" style={{ animationDelay: '0.4s' }} />
-                <div className="w-1 bg-[#d4af37] h-1.5 animate-pulse" style={{ animationDelay: '0.1s' }} />
-                <div className="w-1 bg-[#d4af37] h-2.5 animate-pulse" style={{ animationDelay: '0.3s' }} />
+              <div className="h-4 flex items-center gap-1.5 pt-1 justify-center opacity-90">
+                <div className={`w-1 bg-[#d4af37] transition-all duration-300 ${auroraState === 'Speaking' ? 'h-4 animate-bounce' : 'h-2 animate-pulse'}`} />
+                <div className={`w-1 bg-[#d4af37] transition-all duration-300 ${auroraState === 'Speaking' ? 'h-5 animate-bounce' : 'h-3.5 animate-pulse'}`} style={{ animationDelay: '0.2s' }} />
+                <div className={`w-1 bg-[#d4af37] transition-all duration-300 ${auroraState === 'Speaking' ? 'h-6 animate-bounce' : 'h-4 animate-pulse'}`} style={{ animationDelay: '0.4s' }} />
+                <div className={`w-1 bg-[#d4af37] transition-all duration-300 ${auroraState === 'Speaking' ? 'h-3 animate-bounce' : 'h-2 animate-pulse'}`} style={{ animationDelay: '0.1s' }} />
+                <div className={`w-1 bg-[#d4af37] transition-all duration-300 ${auroraState === 'Speaking' ? 'h-5 animate-bounce' : 'h-3.5 animate-pulse'}`} style={{ animationDelay: '0.3s' }} />
+                <div className={`w-1 bg-[#d4af37] transition-all duration-300 ${auroraState === 'Speaking' ? 'h-2 animate-bounce' : 'h-1.5 animate-pulse'}`} style={{ animationDelay: '0.5s' }} />
               </div>
             </div>
           </div>
@@ -686,29 +767,19 @@ export default memo(function LivingCabinRoom({
 
       </div>
 
-      {/* 4. LIVING DESK INTERACTIVE PROPS (SEATED ON WOODEN TABLE IN FOREGROUND) */}
-      <div className="relative z-20 px-5 pt-1 pb-1">
-        <LivingDesk
-          activeProjectName={currentProjectName}
-          onSelectPropAction={handlePropAction}
-        />
-      </div>
-
-      {/* 5. FLOATING INTERACTIVE CHAT & SPEECH CONSOLE (BOTTOM DRAWER) */}
-      <div className="relative z-30 px-5 pb-3 pt-0.5 pointer-events-auto">
-        <div className="max-w-2xl mx-auto">
+      {/* 4. CHAT INPUT & MULTIMODAL CONSOLE AT BOTTOM CENTER */}
+      <div className="relative z-30 px-6 pb-3 pt-1 pointer-events-auto">
+        <div className="max-w-2xl mx-auto space-y-2">
           
-          {/* Chat Drawer Expand/Collapse Bar */}
-          <div className="bg-[#0c0704]/80 border border-[#3d2b1d]/60 rounded-xl backdrop-blur-xl p-2.5 shadow-2xl space-y-1.5">
-            
-            {/* Drawer header toggle button if messages exist */}
+          {/* Drawer header toggle & Messages Drawer */}
+          <div className="bg-[#0b0603]/85 border border-[#3d2b1d]/70 rounded-xl backdrop-blur-xl p-2.5 shadow-2xl space-y-2">
             <div className="flex items-center justify-between px-1">
               <button
                 onClick={() => setShowChatDrawer(!showChatDrawer)}
-                className="flex items-center gap-1.5 text-xs font-serif text-[#d4af37] hover:text-amber-200 transition-colors cursor-pointer"
+                className="flex items-center gap-2 text-xs font-serif text-[#d4af37] hover:text-amber-200 transition-colors cursor-pointer"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span className="font-medium">Keskustele Auroran kanssa mökillä</span>
+                <span className="font-semibold">Keskustele Auroran kanssa mökillä</span>
                 <span className="text-[10px] text-stone-400">({messages.length} viestiä)</span>
               </button>
 
@@ -722,23 +793,23 @@ export default memo(function LivingCabinRoom({
 
             {/* Messages Scroll Area */}
             {showChatDrawer && (
-              <div className="max-h-[140px] overflow-y-auto space-y-1.5 pr-1 custom-scrollbar text-xs font-serif pt-1 border-t border-[#3d2b1d]/40">
+              <div className="max-h-[160px] overflow-y-auto space-y-2 pr-1 custom-scrollbar text-xs font-serif pt-1.5 border-t border-[#3d2b1d]/40">
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
                     <span className="text-[9px] font-mono text-[#d4af37]/60 mb-0.5">
                       {msg.sender === "user" ? "Jani Qvick" : "Aurora"} • {msg.timestamp}
                     </span>
-                    <div className={`p-2 rounded-lg max-w-[85%] ${
+                    <div className={`p-2.5 rounded-lg max-w-[85%] whitespace-pre-wrap ${
                       msg.sender === "user"
-                        ? "bg-[#20140a] text-stone-200 border border-[#3d2b1d]"
-                        : "bg-[#160d06] text-amber-100 border border-[#d4af37]/30 italic shadow-md"
+                        ? "bg-[#25160a] text-stone-200 border border-[#3d2b1d]"
+                        : "bg-[#180e06] text-amber-100 border border-[#d4af37]/30 italic shadow-md"
                     }`}>
                       {msg.text}
                     </div>
                   </div>
                 ))}
                 {loading && (
-                  <div className="text-xs font-serif italic text-amber-400 animate-pulse flex items-center gap-2">
+                  <div className="text-xs font-serif italic text-amber-400 animate-pulse flex items-center gap-2 py-1">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Aurora pohtii takkatulen äärellä...</span>
                   </div>
@@ -746,41 +817,19 @@ export default memo(function LivingCabinRoom({
                 <div ref={messagesEndRef} />
               </div>
             )}
-
-            {/* Speech Input & Send Bar */}
-            <form onSubmit={handleSendMessage} className="flex items-center gap-1.5 pt-0.5">
-              <button
-                type="button"
-                onClick={startSpeechRecognition}
-                className={`p-2 rounded-lg border transition-all cursor-pointer ${
-                  isListeningSpeech
-                    ? "bg-rose-500/30 text-rose-300 border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.4)] animate-pulse"
-                    : "bg-[#140b05] border-[#3d2b1d] text-stone-400 hover:text-amber-300 hover:border-[#d4af37]/50"
-                }`}
-                title="Puhu Auroralle (Mikrofoni)"
-              >
-                <Mic className="w-3.5 h-3.5" />
-              </button>
-
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onFocus={() => setShowChatDrawer(true)}
-                placeholder="Kirjoita tai puhu Auroralle mökillä..."
-                className="flex-1 bg-[#140b05] border border-[#3d2b1d] focus:border-[#d4af37] rounded-lg px-3 py-1.5 text-xs text-stone-200 focus:outline-none font-serif placeholder:stone-500"
-              />
-
-              <button
-                type="submit"
-                disabled={!input.trim() || loading}
-                className="p-2 bg-[#d4af37]/20 border border-[#d4af37]/40 text-amber-300 rounded-lg hover:bg-[#d4af37]/35 transition-all cursor-pointer disabled:opacity-40"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
-
           </div>
+
+          {/* Multimodal Composer Component */}
+          <MultimodalComposer
+            input={input}
+            setInput={setInput}
+            loading={loading}
+            isListeningSpeech={isListeningSpeech}
+            startSpeechRecognition={startSpeechRecognition}
+            onSendMessage={(text, atts) => handleSendMessage(undefined, text, atts)}
+            onFocusInput={() => setShowChatDrawer(true)}
+          />
+
         </div>
       </div>
 

@@ -15,10 +15,13 @@ export interface Memory {
 
 export type MemoryCategory = 
   | 'Projects'
-  | 'Education'
-  | 'Certificates'
-  | 'Qvick Games'
+  | 'Studies'
+  | 'Ideas'
+  | 'Personal'
   | 'Aurora'
+  | 'Qvick Games'
+  | 'Certificates'
+  | 'Education'
   | 'Personal Milestones';
 
 export interface ProjectSubProgress {
@@ -72,5 +75,69 @@ export interface IdleActivity {
   description: string;
   activePhrase: string;
   iconName: string;
+}
+
+export type KnowledgeCategory = 
+  | 'Projects'
+  | 'Programming'
+  | 'Unity'
+  | 'React'
+  | 'Game Design'
+  | 'Sound'
+  | 'Graphics'
+  | 'Artificial Intelligence'
+  | 'Studies'
+  | 'Personal Notes';
+
+export interface KnowledgeArticle {
+  id: string;
+  title: string;
+  category: KnowledgeCategory;
+  summary: string;
+  content: string;
+  tags: string[];
+  lastUpdated: string;
+  author?: string;
+}
+
+export type IdeaCategory = 
+  | 'Game Ideas'
+  | 'Aurora Ideas'
+  | 'Business Ideas'
+  | 'Research'
+  | 'Future Features';
+
+export interface IdeaItem {
+  id: string;
+  title: string;
+  category: IdeaCategory;
+  description: string;
+  tags: string[];
+  createdAt: string;
+  status: 'Draft' | 'In Evaluation' | 'Approved' | 'Archived';
+  impact: 'High' | 'Medium' | 'Low';
+}
+
+export interface SearchResultItem {
+  id: string;
+  sourceType: 'Diary' | 'Memory' | 'Project Brain' | 'Knowledge' | 'Idea' | 'Documentation';
+  title: string;
+  snippet: string;
+  timestamp?: string;
+  category?: string;
+  tags?: string[];
+  linkId?: string;
+}
+
+export interface ProjectDocSummary {
+  projectName: string;
+  status: string;
+  progressPercentage: number;
+  progressSummary: string;
+  completedFeatures: string[];
+  remainingWork: string[];
+  nextMilestone: string;
+  techStack: string[];
+  lastUpdated: string;
 }
 

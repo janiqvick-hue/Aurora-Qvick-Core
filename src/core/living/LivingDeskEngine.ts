@@ -24,27 +24,27 @@ export const DESK_CONFIGURATIONS: Record<string, DeskPropItem[]> = {
     {
       id: "magnifier",
       name: "Messinkinen suurennuslasi",
-      description: "Käytetty rikoksen yksityiskohtien ja jalanjälkien tutkimiseen.",
+      description: "Qvick Gamesin julkaistun murhamysteerin tutkintaväline.",
       iconName: "search",
-      actionPrompt: "Aurora, mitä opimme tutkimalla tätä johtolankaa suurennuslasilla?",
+      actionPrompt: "Aurora, kertaatko miten tätä suurennuslasia käytettiin Murhamysteerissä?",
       unityPrefabName: "PF_Brass_Magnifier",
       transform3D: { position: [-0.3, 0.78, 0.2], rotation: [0, 45, 0], scale: [1, 1, 1] }
     },
     {
       id: "clue_folder",
-      name: "Tutkintakansio & Epäiltyjen valokuvat",
-      description: "Mökin kartat, epäiltyjen muistiinpanot ja Antin huoneen havainnot.",
+      name: "Tutkintakansio & Julkaistu Peli",
+      description: "Julkaistun lippulaivapelin tutkintakansio, epäiltyjen haastattelut ja 11 lokaatiota.",
       iconName: "folder",
-      actionPrompt: "Kerro minulle lisää Murhamysteerin tutkintakansiosta ja epäillyistä.",
+      actionPrompt: "Kerro minulle lisää Murhamysteeri Mökillä -pelin julkaisusta ja tutkinnasta.",
       unityPrefabName: "PF_Clue_Folder_Open",
       transform3D: { position: [0.1, 0.77, 0.1], rotation: [0, -10, 0], scale: [1, 1, 1] }
     },
     {
       id: "crime_map",
-      name: "Mökin ja rannan pohjakartta",
-      description: "Yksityiskohtainen kartta ranta-alueesta ja saunapolusta.",
+      name: "11 tutkintapaikan pohjakartta",
+      description: "Julkaistun pelin 11 tutkintapaikkaa (Tupa, Keittiö, Antin huone, Sauna, Venevalkama ym.).",
       iconName: "map",
-      actionPrompt: "Tarkastellaan Murhamysteerin pohjakarttaa yhdessä.",
+      actionPrompt: "Tarkastellaan Murhamysteerin 11 valmista pelilokaatiota yhdessä.",
       unityPrefabName: "PF_Lakeside_Crime_Map",
       transform3D: { position: [0.4, 0.77, 0.25], rotation: [0, 15, 0], scale: [1, 1, 1] }
     },

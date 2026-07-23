@@ -24,23 +24,23 @@ export default memo(function LivingDesk({ activeProjectName, onSelectPropAction 
         {
           id: "magnifier",
           name: "Messinkinen suurennuslasi",
-          description: "Käytetty rikoksen yksityiskohtien ja jalanjälkien tutkimiseen.",
+          description: "Qvick Gamesin julkaistun murhamysteerin tutkintaväline.",
           icon: Search,
-          actionText: "Aurora, mitä opimme tutkimalla tätä johtolankaa suurennuslasilla?"
+          actionText: "Aurora, kertaatko miten tätä suurennuslasia käytettiin Murhamysteerissä?"
         },
         {
           id: "clue_notes",
-          name: "Tutkintakansio & Epäiltyjen valokuvat",
-          description: "Mökin kartat, epäiltyjen muistiinpanot ja Antin huoneen havainnot.",
+          name: "Tutkintakansio & Julkaistu Peli",
+          description: "Julkaistun lippulaivapelin tutkintakansio, epäiltyjen haastattelut ja 11 lokaatiota.",
           icon: FolderGit2,
-          actionText: "Kerro minulle lisää Murhamysteerin tutkintakansiosta ja epäillyistä."
+          actionText: "Kerro minulle lisää Murhamysteeri Mökillä -pelin julkaisusta ja tutkinnasta."
         },
         {
           id: "map",
-          name: "Mökin ja rannan pohjakartta",
-          description: "Yksityiskohtainen kartta ranta-alueesta ja saunapolusta.",
+          name: "11 tutkintapaikan pohjakartta",
+          description: "Julkaistun pelin 11 tutkintapaikkaa (Tupa, Keittiö, Antin huone, Sauna, Venevalkama ym.).",
           icon: Map,
-          actionText: "Tarkastellaan Murhamysteerin pohjakarttaa yhdessä."
+          actionText: "Tarkastellaan Murhamysteerin 11 valmista pelilokaatiota yhdessä."
         },
         {
           id: "kuksa",

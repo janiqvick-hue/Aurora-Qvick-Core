@@ -9,7 +9,7 @@ export const GREETINGS_LIST = [
   "Hei Jani. Mukava nähdä taas. Sytytin takkaan tulen ennen kuin saavuit.",
   "Katselin juuri järvelle. Tänään siellä on poikkeuksellisen tyyntä.",
   "Olen valmistellut tämän päivän työtilan. Lopella on leppoisa tunnelma.",
-  "Tutkin Murhamysteerin johtolankoja odottaessani sinua.",
+  "Ihailin juuri Murhamysteeri Mökillä -pelin julkaisun saavutusta.",
   "Kirjoitin muutaman tuoreen ajatuksen nahkakantiseen päiväkirjaani.",
   "Löysin yhden uuden luovan idean Qvick Gamesia varten.",
   "Join kuumaa teetä kuksasta ja pohdiskelin pelimekaniikoitamme.",
@@ -18,10 +18,10 @@ export const GREETINGS_LIST = [
 
 export const PROJECT_RECOMMENDATIONS: Record<string, string[]> = {
   "Murhamysteeri Mökillä": [
-    "Tänään suosittelisin viimeistelemään Antin huoneen johtolangat.",
-    "Voisimme jatkaa kuulustelujärjestelmän hiomista.",
-    "Suosittelen tarkastelemaan rikospaikkakarttaa ja epäiltyjen aikajaksoja.",
-    "Voisimme syventyä tutkintataulun viimeisiin puuttuviin solmukohtiin."
+    "Tänään suosittelisin hiomaan Murhamysteeri Mökillä -pelin Steam-kauppasivua ja traileria.",
+    "Voisimme katsastaa julkaistun peliemme pelaajapalautetta ja markkinointisuunnitelmaa.",
+    "Suosittelen päivittämään Qvick Games -portfolion (qvickgames.fi) julkaisutiedoilla.",
+    "Voisimme ideoida seuraavaa Qvick Games -peliä, kuten Järven Vartijoita."
   ],
   "Aurora Core": [
     "Tänään suosittelisin vahvistamaan mökin muistijärjestelmää.",

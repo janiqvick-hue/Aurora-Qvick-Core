@@ -13,7 +13,7 @@ export default function ProjectsPanel({ onSelectProject }: ProjectsPanelProps) {
   const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("aurora_projects_v1");
+    const stored = localStorage.getItem("aurora_projects_v2");
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -36,8 +36,8 @@ export default function ProjectsPanel({ onSelectProject }: ProjectsPanelProps) {
   const initializeDefaultProjects = () => {
     const defaults = [
       { name: "Aurora Qvick", desc: "Luova tekoäly-kumppani ja peli-ideointisielu Qvick Gamesille." },
+      { name: "Murhamysteeri Mökillä", desc: "Qvick Gamesin virallisesti julkaistu elokuvallinen suomalainen murhamysteeri (100% valmis)." },
       { name: "Aurora Home", desc: "Tekoälyohjattu rauhallisen kodin tai työtilan hallintajärjestelmä." },
-      { name: "Murhamysteeri Mökillä", desc: "Rauhalliseen suomalaiseen mökkiympäristöön sijoittuva salapoliisipeli." },
       { name: "Järven Vartijat", desc: "Myyttinen suojelija- ja strategiapeli pohjoisen järven salaisuuksista." },
       { name: "VR Murder Mystery", desc: "Virtuaalitodellisuudessa pelattava kylmäävä mökkimurhamysteeri." }
     ];
@@ -50,7 +50,7 @@ export default function ProjectsPanel({ onSelectProject }: ProjectsPanelProps) {
     }));
 
     setProjects(initialList);
-    localStorage.setItem("aurora_projects_v1", JSON.stringify(initialList));
+    localStorage.setItem("aurora_projects_v2", JSON.stringify(initialList));
     onSelectProject(initialList[0]);
   };
 
@@ -66,7 +66,7 @@ export default function ProjectsPanel({ onSelectProject }: ProjectsPanelProps) {
       };
     });
     setProjects(updated);
-    localStorage.setItem("aurora_projects_v1", JSON.stringify(updated));
+    localStorage.setItem("aurora_projects_v2", JSON.stringify(updated));
   };
 
   const handleAddProject = (e: FormEvent) => {
@@ -82,7 +82,7 @@ export default function ProjectsPanel({ onSelectProject }: ProjectsPanelProps) {
 
     const updated = [...projects, added];
     setProjects(updated);
-    localStorage.setItem("aurora_projects_v1", JSON.stringify(updated));
+    localStorage.setItem("aurora_projects_v2", JSON.stringify(updated));
     setNewProjectName("");
     setNewProjectDesc("");
     setShowAddForm(false);
@@ -109,7 +109,7 @@ export default function ProjectsPanel({ onSelectProject }: ProjectsPanelProps) {
     }
 
     setProjects(updated);
-    localStorage.setItem("aurora_projects_v1", JSON.stringify(updated));
+    localStorage.setItem("aurora_projects_v2", JSON.stringify(updated));
   };
 
   return (

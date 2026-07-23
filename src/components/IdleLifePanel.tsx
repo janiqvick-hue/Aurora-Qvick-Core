@@ -68,7 +68,7 @@ export const ACTIVITIES_BY_TIME: Record<string, IdleActivity[]> = {
       id: "evening_writing",
       label: "Kirjoittaa uusia tarinoita",
       description: "Aurora uppoutuu kirjoittamaan uusia peli-ideoita ja tarinoita Janille.",
-      activePhrase: "Luon uutta syvää tarinaa Murhamysteeri-peliimme. Tuli rätisee taustalla...",
+      activePhrase: "Luon uusia tarina-ideoita seuraavia Qvick Games -pelejä varten. Tuli rätisee taustalla...",
       iconName: "pen"
     }
   ],

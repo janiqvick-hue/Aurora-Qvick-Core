@@ -7,6 +7,7 @@ import ProjectBrain from "./components/ProjectBrain";
 import AuroraJournal from "./components/AuroraJournal";
 import SettingsModal from "./components/SettingsModal";
 import AboutAuroraModal from "./components/AboutAuroraModal";
+import QvickGamesEcosystemModal from "./components/QvickGamesEcosystemModal";
 import LivingCabinRoom from "./components/LivingCabinRoom";
 import { auroraVoice } from "./services/auroraVoice";
 import { livingStateEngine } from "./core/LivingStateEngine";
@@ -20,7 +21,7 @@ export default function App() {
   const [activeProject, setActiveProject] = useState<Project | null>({
     id: "proj-1",
     name: "Murhamysteeri Mökillä",
-    description: "Qvick Games -hanke: Murhamysteeri Mökillä",
+    description: "Qvick Games julkaistu lippulaivapeli: Murhamysteeri Mökillä (100% valmis)",
     isActive: true
   });
 
@@ -28,6 +29,7 @@ export default function App() {
   const [activeOverlay, setActiveOverlay] = useState<'none' | 'memory' | 'journal' | 'brain'>('none');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showEcosystemModal, setShowEcosystemModal] = useState(false);
 
   const [timeOfDay, setTimeOfDay] = useState<'aamu' | 'paiva' | 'ilta' | 'yo' | 'sade' | 'talvi'>('ilta');
   const [ambientSound, setAmbientSound] = useState(true);
@@ -73,13 +75,15 @@ export default function App() {
     setActiveProject(proj);
   }, []);
 
-  const handleOpenNav = useCallback((nav: 'memory' | 'journal' | 'brain' | 'settings' | 'about') => {
+  const handleOpenNav = useCallback((nav: 'memory' | 'journal' | 'brain' | 'settings' | 'about' | 'ecosystem') => {
     if (nav === 'memory' || nav === 'journal' || nav === 'brain') {
       setActiveOverlay(nav);
     } else if (nav === 'settings') {
       setShowSettingsModal(true);
     } else if (nav === 'about') {
       setShowAboutModal(true);
+    } else if (nav === 'ecosystem') {
+      setShowEcosystemModal(true);
     }
   }, []);
 
@@ -142,6 +146,13 @@ export default function App() {
       <AboutAuroraModal
         isOpen={showAboutModal}
         onClose={() => setShowAboutModal(false)}
+      />
+
+      {/* Qvick Games Studio OS Ecosystem Modal */}
+      <QvickGamesEcosystemModal
+        isOpen={showEcosystemModal}
+        onClose={() => setShowEcosystemModal(false)}
+        onSelectProject={(projName) => setActiveProject({ id: `proj-${Date.now()}`, name: projName, description: `Aktiivinen hanke: ${projName}`, isActive: true })}
       />
     </div>
   );

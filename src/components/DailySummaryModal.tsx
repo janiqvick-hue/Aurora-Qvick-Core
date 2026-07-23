@@ -40,7 +40,7 @@ export default function DailySummaryModal({ isOpen, onClose, activeProject }: Da
 
   const getRecommendedStep = () => {
     if (projectName.includes("Murhamysteeri")) {
-      return "Jatka tutkintataulun johtolankojen ja vihjeiden tasapainotusta huomenna.";
+      return "Jatka Murhamysteeri Mökillä -pelin Steam-valmistelua, trailerin työstöä ja markkinointia huomenna.";
     }
     if (projectName.includes("Aurora")) {
       return "Jatka Project Brain -moduulin ja tekoälykumppanuuden laatuoptimointia huomenna.";

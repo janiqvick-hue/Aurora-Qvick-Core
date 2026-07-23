@@ -5,9 +5,9 @@ import { BookOpen, Sparkles, Feather, RefreshCw, Trash2 } from "lucide-react";
 const INITIAL_JOURNAL_ENTRIES: JournalEntry[] = [
   {
     id: "j-1",
-    text: "Huomasin, että tutkintataulun ja johtolankojen kytkennät alkavat hahmottua erittäin selkeiksi. Mökkiympäristö tuo mukaan aitoa suomalaista jännitettä.",
-    timestamp: "21.7.2026 18:45",
-    category: "Observation",
+    text: "Murhamysteeri Mökillä – Hiljaisen järven salaisuus on nyt virallisesti julkaistu ja 100% valmis peli! 11 tutkintapaikkaa, tutkintataulu, kaksikielisyys ja FMOD-äänimaailma tekevät siitä upean lippulaivamerkkipaalun Qvick Gamesille.",
+    timestamp: "23.7.2026 10:15",
+    category: "Milestone",
     relatedProject: "Murhamysteeri Mökillä"
   },
   {
@@ -37,7 +37,7 @@ export default function AuroraJournal() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem("aurora_journal_v1");
+    const stored = localStorage.getItem("aurora_journal_v2");
     if (stored) {
       try {
         setEntries(JSON.parse(stored));
@@ -51,7 +51,7 @@ export default function AuroraJournal() {
 
   const initializeDefaultEntries = () => {
     setEntries(INITIAL_JOURNAL_ENTRIES);
-    localStorage.setItem("aurora_journal_v1", JSON.stringify(INITIAL_JOURNAL_ENTRIES));
+    localStorage.setItem("aurora_journal_v2", JSON.stringify(INITIAL_JOURNAL_ENTRIES));
   };
 
   const handleGenerateThought = () => {
@@ -71,13 +71,13 @@ export default function AuroraJournal() {
     };
     const updated = [newEntry, ...entries];
     setEntries(updated);
-    localStorage.setItem("aurora_journal_v1", JSON.stringify(updated));
+    localStorage.setItem("aurora_journal_v2", JSON.stringify(updated));
   };
 
   const handleDeleteEntry = (id: string) => {
     const updated = entries.filter(e => e.id !== id);
     setEntries(updated);
-    localStorage.setItem("aurora_journal_v1", JSON.stringify(updated));
+    localStorage.setItem("aurora_journal_v2", JSON.stringify(updated));
   };
 
   const getCategoryBadge = (category?: string) => {

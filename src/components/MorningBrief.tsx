@@ -21,9 +21,9 @@ export default function MorningBrief({ activeProject, onClose, onActionClick }: 
   const getActionPoints = (): string[] => {
     if (projectName.includes("Murhamysteeri")) {
       return [
-        "johtolankojen ja vihjeiden tasapainotus",
-        "tutkintataulun visuaalinen ryhmittely",
-        "syyllisen motivaation ja vuoropuhelun syventäminen"
+        "markkinointimateriaalien & Steam-sivun hienosäätö",
+        "pelin trailerin & esittelyvideon viilaus",
+        "pelaajapalautteen keruu & julkaisun jälkeinen seuranta"
       ];
     }
     if (projectName.includes("Aurora")) {

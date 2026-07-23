@@ -1,43 +1,72 @@
 import { useState, useEffect, FormEvent } from "react";
 import { Project, ProjectSubProgress } from "../types";
-import { Cpu, Plus, CheckSquare, Square, Sparkles, Edit3, Calendar, CheckCircle2, Bookmark, BarChart2 } from "lucide-react";
+import { Cpu, Plus, CheckSquare, Square, Edit3, Calendar, CheckCircle2, Bookmark, BarChart2 } from "lucide-react";
 
 interface ProjectBrainProps {
   activeProject: Project | null;
   onSelectProject: (p: Project) => void;
 }
 
-const DEFAULT_BRAIN_DATA: Record<string, {
+export const DEFAULT_BRAIN_DATA: Record<string, {
   status: string;
   progress: number;
   subProgress: ProjectSubProgress;
+  priority: string;
+  currentPhase: string;
+  currentMilestone: string;
+  nextMilestone: string;
+  upcomingMilestone: string;
+  estimatedWork: string;
+  estimatedCompletion: string;
+  dependencies: string;
+  auroraRecommendation: string;
   lastModified: string;
   activeTasks: string[];
   completedMilestones: string[];
   notes: string;
 }> = {
   "Murhamysteeri Mökillä": {
-    status: "Pelimekaniikka & Johtolangat",
-    progress: 75,
-    subProgress: { visual: 80, story: 90, audio: 70, testing: 40, code: 85 },
-    lastModified: "16.7.2026",
+    status: "Julkaistu & Valmis (v1.0)",
+    progress: 100,
+    subProgress: { visual: 100, story: 100, audio: 100, testing: 100, code: 100 },
+    priority: "Korkea (Lippulaivahanke)",
+    currentPhase: "Julkaistu – Qvick Games Lippulaivapeli",
+    currentMilestone: "Virallinen julkaisu & 100% valmis peli-integraatio",
+    nextMilestone: "Steam-valmistelu, traileri & markkinointimateriaalit",
+    upcomingMilestone: "Pelaajapalaute, päivityssuunnittelu & jatkosisältöideat",
+    estimatedWork: "Valmis (100%)",
+    estimatedCompletion: "Julkaistu 23.7.2026",
+    dependencies: "Peli on täysin valmis",
+    auroraRecommendation: "Murhamysteeri Mökillä on valmis lippulaivapelimme! Suosittelen keskittymään markkinointiin, Steam-valmisteluun, trailerin luontiin sekä seuraavien Qvick Games -hankkeiden (Järven Vartijat, Aurora Core, Aurora Home) kehittämiseen.",
+    lastModified: "23.7.2026",
     activeTasks: [
-      "Tutkintataulun johtolankojen kytkennät",
-      "Epäiltyjen vuoropuhelun syventäminen",
-      "Mökin 3D/2D-ympäristön tunnelmavalaistus"
+      "Steam-sivun & trailerin materiaalien valmistelu",
+      "Pelaajapalautteen ja arvostelujen seuranta",
+      "Patch-päivitysten ja jatkosisällön kartoitus",
+      "Portfolio- ja verkkosivupäivitykset (qvickgames.fi)"
     ],
     completedMilestones: [
-      "Tarinarungon ja mysteerin ratkaisun lukitus",
-      "Perusinteraktioiden ja inventaarion toteutus",
-      "Sound design & FMOD -äänipankin alustus"
+      "11 tutkintapaikan (Tupa, Keittiö, Antin huone, Sauna, Venevalkama ym.) toteutus",
+      "Interaktiivinen tutkintataulu, todisteinventaario & kuulustelumekaniikka",
+      "Kaksikielisyys (Suomi/Englanti), FMOD-äänipankki & pelitallennus",
+      "Lippulaivajulkaisu & 100% valmis peli-integraatio"
     ],
-    notes: "Mökkiympäristö tarvitsee rauhallisen mutta kylmäävän pohjoisen mysteeri-ilmaston."
+    notes: "Qvick Gamesin virallinen elokuvallinen suomalainen murhamysteeri mökkimiljöössä. Peli on 100% valmis."
   },
   "Aurora Qvick": {
-    status: "Aurora Core Alpha 0.2",
-    progress: 88,
-    subProgress: { visual: 90, story: 95, audio: 85, testing: 80, code: 92 },
-    lastModified: "21.7.2026",
+    status: "Aurora Core Alpha 0.4",
+    progress: 96,
+    subProgress: { visual: 96, story: 95, audio: 94, testing: 92, code: 96 },
+    priority: "Korkea",
+    currentPhase: "Alpha 0.4 – Älykäs Työtila-apulainen & Dashboard",
+    currentMilestone: "Työtilan Päivittäinkatsaus & Smart Project Timeline",
+    nextMilestone: "Digitaalinen kumppanipäivitys & Aamukatsaus",
+    upcomingMilestone: "Presence Engine 2.0 & Tilatietoiset rutiinit mökillä",
+    estimatedWork: "Valmis / Ylläpito",
+    estimatedCompletion: "Jatkuva kehitys",
+    dependencies: "AGENTS.md, Gateway, Puhesynteesi",
+    auroraRecommendation: "Vahvistetaan projektien välistä muistia ja päivittäistä reflektointia mökillä.",
+    lastModified: "23.7.2026",
     activeTasks: [
       "Project Brain & Aamukatsaus -integraatio",
       "Kategorioitu muistiselain ja teemat",
@@ -45,16 +74,49 @@ const DEFAULT_BRAIN_DATA: Record<string, {
     ],
     completedMilestones: [
       "Suomenkielinen mökkikäyttöliittymä & Gateway",
-      "Puhesynteesi & Ääniohjaus -prototyyppi",
-      "Erottamaton tekoälymuisti & Sertifikaattikanta"
+      "Pehmeä & luonnollinen suomalainen puhesynteesi",
+      "Xamk 21 op opintosuoritusote & sertifikaattikanta muistissa"
     ],
     notes: "Aurora ei ole pelkkä apulainen, vaan sielukas ja rauhallinen Qvick Games -kumppani."
+  },
+  "Aurora Home": {
+    status: "Virtuaalitila & Koti-integraatio",
+    progress: 50,
+    subProgress: { visual: 60, story: 70, audio: 40, testing: 20, code: 45 },
+    priority: "Normaali",
+    currentPhase: "Esituotanto – 3D-ympäristö & Tilakonsepti",
+    currentMilestone: "3D-mökkiympäristön ja Gatewayn kytkentä",
+    nextMilestone: "3D-mökkiympäristön ja Gatewayn kytkentä",
+    upcomingMilestone: "Huoneiden välinen virtuaalinavigaatio & interaktiiviset esineet",
+    estimatedWork: "25 h",
+    estimatedCompletion: "Marraskuu 2026",
+    dependencies: "Aurora Core Alpha 0.3, Unity WebGL",
+    auroraRecommendation: "Hahmotellaan tulevan 3D-virtuaalimökin vuorovaikutusmallia ja huonevalikkoa.",
+    lastModified: "23.7.2026",
+    activeTasks: [
+      "Huoneiden välinen virtuaalinavigaatio",
+      "Kytke Aurora Core Homen tekoälymoottoriksi",
+      "Interaktiiviset työpöytäobjektit"
+    ],
+    completedMilestones: [
+      "Virtuaalikodin pääkonsepti määritelty"
+    ],
+    notes: "Tuleva 3D-kotiympäristö jossa Aurora toivottaa vieraat ja käyttäjän tervetulleeksi."
   },
   "Järven Vartijat": {
     status: "Konseptointi & Visio",
     progress: 45,
     subProgress: { visual: 50, story: 70, audio: 40, testing: 10, code: 35 },
-    lastModified: "16.7.2026",
+    priority: "Normaali",
+    currentPhase: "Lore & Mytologinen Taustatarina",
+    currentMilestone: "Selain- ja Unity-versioiden tekninen määrittely",
+    nextMilestone: "Selain- ja Unity-versioiden tekninen määrittely",
+    upcomingMilestone: "Vartijat-hahmojen suojeluvahvuudet & Kirjasarjan 1. luku",
+    estimatedWork: "40 h",
+    estimatedCompletion: "Joulukuu 2026",
+    dependencies: "Suomalainen tarusto, pelimoottori",
+    auroraRecommendation: "Syvennytään saaren vartijoiden taustatarinaan ja mytologiseen kronikkaan.",
+    lastModified: "23.7.2026",
     activeTasks: [
       "Selain- ja Unity-version tekninen määrittely",
       "Vartijat-hahmojen suojeluvahvuudet",
@@ -67,19 +129,29 @@ const DEFAULT_BRAIN_DATA: Record<string, {
     notes: "Suunnitelmissa selainversio, Unity-versio, kirjasarja ja mahdollinen VR-kokemus."
   },
   "Qvick Games": {
-    status: "Studio & Portfolio",
-    progress: 82,
-    subProgress: { visual: 85, story: 80, audio: 75, testing: 70, code: 90 },
-    lastModified: "16.7.2026",
+    status: "Studio, Opinnot & Portfolio",
+    progress: 92,
+    subProgress: { visual: 90, story: 90, audio: 88, testing: 85, code: 95 },
+    priority: "Strateginen",
+    currentPhase: "Studiobrändi & Akateeminen Avoin Väylä",
+    currentMilestone: "Tutkintohaku avoimen väylän kautta (Xamk 21 op pohjalla)",
+    nextMilestone: "Tutkintohaku avoimen väylän kautta (Xamk 21 op pohjalla)",
+    upcomingMilestone: "Seuraavan Unity/Unreal-pelihankkeen esituotanto",
+    estimatedWork: "Jatkuva kehitys",
+    estimatedCompletion: "2026 - 2027",
+    dependencies: "Xamk 21 op suoritusote, IVGC+ 33p, Microsoft C# (96.3%)",
+    auroraRecommendation: "Ylläpidetään virallisten sertifikaattien ja peliportfolion yhteistä esittelyä.",
+    lastModified: "23.7.2026",
     activeTasks: [
-      "Xamk avoimen AMK:n opintopisteiden vahvistus",
-      "Haku tutkinto-opiskelijaksi avoimen väylän kautta",
-      "Studiobrändin ja julkaisustrategian viimeistely"
+      "Haku tutkinto-opiskelijaksi avoimen väylän kautta (Xamk 21 op pohjalla)",
+      "Pelistudiobrändin ja julkaisustrategian viimeistely",
+      "Seuraavan Unity/Unreal-pelihankkeen esituotanto"
     ],
     completedMilestones: [
-      "Google Project Management Professional -sertifikaatti",
-      "Epic Games Game Design -sertifikaatti",
-      "Microsoft C# -sertifikaatti & Elements of AI 2op"
+      "Virallinen Xamk-opintosuoritusote (21 op, 23.7.2026)",
+      "IVGC+ / Cadgi 33 pisteellä suoritettu (11 moduulia)",
+      "Google Project Management Professional & C# Microsoft Certification (96.3%)",
+      "Epic Games Game Design & Elements of AI (2op)"
     ],
     notes: "Qvick Games on pitkäjänteinen pelistudio, joka tuottaa tunnelmallisia pelejä."
   }
@@ -103,7 +175,7 @@ export default function ProjectBrain({ activeProject, onSelectProject }: Project
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem("aurora_project_brain_v2");
+    const stored = localStorage.getItem("aurora_project_brain_v3");
     if (stored) {
       try {
         setProjectsData(JSON.parse(stored));
@@ -115,7 +187,7 @@ export default function ProjectBrain({ activeProject, onSelectProject }: Project
 
   const saveBrainData = (updated: Record<string, any>) => {
     setProjectsData(updated);
-    localStorage.setItem("aurora_project_brain_v2", JSON.stringify(updated));
+    localStorage.setItem("aurora_project_brain_v3", JSON.stringify(updated));
   };
 
   const renderProgressBar = (value: number) => {
@@ -205,6 +277,99 @@ export default function ProjectBrain({ activeProject, onSelectProject }: Project
               {brain.lastModified}
             </span>
           </div>
+        </div>
+
+        {/* Smart Project Timeline */}
+        <div className="bg-stone-950/50 p-3.5 rounded-lg border border-amber-500/30 space-y-3 font-mono">
+          <div className="flex items-center justify-between border-b border-stone-800 pb-2">
+            <span className="text-[11px] text-amber-400 font-serif tracking-wider font-semibold uppercase flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-amber-500" />
+              ÄLYKÄS PROJEKTIAIKAJANA (SMART PROJECT TIMELINE)
+            </span>
+            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/30">
+              {brain.currentPhase || brain.status}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-[11px] pt-1">
+            {/* Completed */}
+            <div className="bg-stone-900/60 p-2.5 rounded border border-emerald-500/30 space-y-1">
+              <span className="text-emerald-400 font-semibold block text-[9px] uppercase tracking-wider flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Valmiit etapit
+              </span>
+              <span className="text-stone-300 font-serif text-[11px] block line-clamp-2">
+                {brain.completedMilestones && brain.completedMilestones.length > 0 
+                  ? brain.completedMilestones[0]
+                  : "Perusversio suoritettu"}
+              </span>
+              <span className="text-[9px] text-stone-500 block">Yhteensä {brain.completedMilestones?.length || 0} etappia</span>
+            </div>
+
+            {/* Current */}
+            <div className="bg-amber-950/30 p-2.5 rounded border border-amber-500/50 space-y-1">
+              <span className="text-amber-400 font-semibold block text-[9px] uppercase tracking-wider flex items-center gap-1">
+                ✦ Nykyinen etappi
+              </span>
+              <span className="text-amber-200 font-serif text-[11px] block">
+                {brain.currentMilestone || brain.nextMilestone}
+              </span>
+              <span className="text-[9px] text-amber-400/80 block">Työn alla – {brain.estimatedWork || "15 h"}</span>
+            </div>
+
+            {/* Upcoming */}
+            <div className="bg-stone-900/60 p-2.5 rounded border border-stone-800 space-y-1">
+              <span className="text-stone-400 font-semibold block text-[9px] uppercase tracking-wider flex items-center gap-1">
+                → Seuraava etappi
+              </span>
+              <span className="text-stone-300 font-serif text-[11px] block">
+                {brain.upcomingMilestone || "Aamukatsaus & Teeman hiominen"}
+              </span>
+              <span className="text-[9px] text-stone-500 block">Suunnitteluvaiheessa</span>
+            </div>
+
+            {/* Completion */}
+            <div className="bg-stone-900/60 p-2.5 rounded border border-stone-800 space-y-1">
+              <span className="text-stone-400 font-semibold block text-[9px] uppercase tracking-wider flex items-center gap-1">
+                🏁 Arvioitu valmistuminen
+              </span>
+              <span className="text-stone-200 font-mono text-xs block">
+                {brain.estimatedCompletion || "Syyskuu 2026"}
+              </span>
+              <span className="text-[9px] text-stone-500 block">Status: Aikataulussa</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Planning Center & Companion Recommendation */}
+        <div className="bg-stone-950/50 p-3.5 rounded-lg border border-stone-800/60 space-y-2 text-xs font-mono">
+          <div className="flex items-center justify-between border-b border-stone-800 pb-1.5">
+            <span className="text-[11px] text-amber-400 font-serif tracking-wider font-semibold uppercase">
+              AURORAN SUUNNITTELUKESKUS
+            </span>
+            <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded">
+              Prioriteetti: {brain.priority || "Korkea"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] pt-1">
+            <div className="bg-stone-900/40 p-2 rounded border border-stone-800/40">
+              <span className="text-stone-500 block text-[9px] uppercase">Seuraava Etappi</span>
+              <span className="text-stone-200 font-sans">{brain.nextMilestone || "Täsmennetään"}</span>
+            </div>
+            <div className="bg-stone-900/40 p-2 rounded border border-stone-800/40">
+              <span className="text-stone-500 block text-[9px] uppercase">Arvioitu Jäljellä Oleva Työ</span>
+              <span className="text-stone-200 font-sans">{brain.estimatedWork || "10-15 h"}</span>
+            </div>
+          </div>
+
+          {brain.auroraRecommendation && (
+            <div className="bg-amber-950/20 border border-amber-500/30 p-2.5 rounded text-amber-200 text-xs italic font-serif">
+              <span className="not-italic font-semibold text-amber-400 block text-[10px] uppercase font-mono mb-0.5">
+                ✦ Auroran kumppanisuositus
+              </span>
+              "{brain.auroraRecommendation}"
+            </div>
+          )}
         </div>
 
         {/* Visual Progress Bars Breakdown */}
