@@ -1,0 +1,234 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile and metadata in Aurora Qvick Core",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "lastLoginAt": { "type": "string" },
+        "schemaVersion": { "type": "number" }
+      },
+      "required": ["uid", "schemaVersion"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "User project entity in Aurora Qvick Core",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "isArchived": { "type": "boolean" },
+        "isDeleted": { "type": "boolean" },
+        "status": { "type": "string" },
+        "priority": { "type": "string" },
+        "category": { "type": "string" },
+        "progress": { "type": "number" },
+        "technologies": { "type": "array" },
+        "platform": { "type": "array" },
+        "schemaVersion": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "schemaVersion"]
+    },
+    "Milestone": {
+      "title": "Milestone",
+      "description": "Project milestone entity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "projectId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "isCompleted": { "type": "boolean" },
+        "completedAt": { "type": "string" },
+        "isArchived": { "type": "boolean" },
+        "order": { "type": "number" },
+        "schemaVersion": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "projectId", "title", "schemaVersion"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "User task entity with optional project association",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "projectId": { "type": "string" },
+        "status": { "type": "string" },
+        "priority": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "isCompleted": { "type": "boolean" },
+        "isArchived": { "type": "boolean" },
+        "isDeleted": { "type": "boolean" },
+        "schemaVersion": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "schemaVersion"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "User goal entity with progress tracking and optional project link",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "projectId": { "type": "string" },
+        "progress": { "type": "number" },
+        "targetValue": { "type": "number" },
+        "currentValue": { "type": "number" },
+        "status": { "type": "string" },
+        "isArchived": { "type": "boolean" },
+        "isDeleted": { "type": "boolean" },
+        "schemaVersion": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "schemaVersion"]
+    },
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "User preferences and general application settings (excluding Memory Engine & Visual Memory)",
+      "type": "object",
+      "properties": {
+        "settingId": { "type": "string" },
+        "soundEnabled": { "type": "boolean" },
+        "ambientSound": { "type": "string" },
+        "voiceVolume": { "type": "number" },
+        "preferredVoiceName": { "type": "string" },
+        "voiceRate": { "type": "number" },
+        "voicePitch": { "type": "number" },
+        "layoutMode": { "type": "string" },
+        "theme": { "type": "string" },
+        "schemaVersion": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["settingId", "schemaVersion"]
+    },
+    "KnowledgeItem": {
+      "title": "KnowledgeItem",
+      "description": "Knowledge Library item entity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "tags": { "type": "array" },
+        "author": { "type": "string" },
+        "projectId": { "type": "string" },
+        "isArchived": { "type": "boolean" },
+        "isDeleted": { "type": "boolean" },
+        "schemaVersion": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "schemaVersion"]
+    },
+    "IdeaItem": {
+      "title": "IdeaItem",
+      "description": "Idea Vault item entity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "tags": { "type": "array" },
+        "status": { "type": "string" },
+        "impact": { "type": "string" },
+        "projectId": { "type": "string" },
+        "isArchived": { "type": "boolean" },
+        "isDeleted": { "type": "boolean" },
+        "schemaVersion": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "schemaVersion"]
+    },
+    "Memory": {
+      "title": "Memory",
+      "description": "User cloud memory document entity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "memoryType": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "summary": { "type": "string" },
+        "importance": { "type": "number" },
+        "confidence": { "type": "number" },
+        "sourceType": { "type": "string" },
+        "sourceId": { "type": "string" },
+        "relatedProjectIds": { "type": "array" },
+        "relatedConversationId": { "type": "string" },
+        "tags": { "type": "array" },
+        "occurredAt": { "type": "string" },
+        "isPinned": { "type": "boolean" },
+        "isArchived": { "type": "boolean" },
+        "isDeleted": { "type": "boolean" },
+        "embeddingStatus": { "type": "string" },
+        "embeddingModel": { "type": "string" },
+        "embeddingModelVersion": { "type": "string" },
+        "schemaVersion": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "schemaVersion"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User document root"
+    },
+    "/users/{userId}/projects/{projectId}": {
+      "schema": "Project",
+      "description": "User projects collection"
+    },
+    "/users/{userId}/projects/{projectId}/milestones/{milestoneId}": {
+      "schema": "Milestone",
+      "description": "Milestones subcollection for a project"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "User tasks collection"
+    },
+    "/users/{userId}/goals/{goalId}": {
+      "schema": "Goal",
+      "description": "User goals collection"
+    },
+    "/users/{userId}/settings/{settingId}": {
+      "schema": "UserSettings",
+      "description": "User application settings collection"
+    },
+    "/users/{userId}/knowledgeItems/{knowledgeItemId}": {
+      "schema": "KnowledgeItem",
+      "description": "User Knowledge Library collection"
+    },
+    "/users/{userId}/ideaVault/{ideaId}": {
+      "schema": "IdeaItem",
+      "description": "User Idea Vault collection"
+    },
+    "/users/{userId}/memories/{memoryId}": {
+      "schema": "Memory",
+      "description": "User Cloud Memories collection"
+    }
+  }
+}
