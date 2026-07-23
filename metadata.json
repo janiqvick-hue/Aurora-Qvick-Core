@@ -1,6 +1,6 @@
 {
   "name": "Aurora Qvick Core",
-  "description": "Aurora Qvick Core Alpha 0.3 - Living Presence Engine and Finnish lakeside cabin companion by Qvick Games.",
+  "description": "Aurora Qvick Core Alpha 0.7 - AI Operating System of Qvick Games with Living Presence Engine, persistent memory and Finnish lakeside cabin companion.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

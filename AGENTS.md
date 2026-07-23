@@ -1,8 +1,40 @@
 # Käyttäjän Profiili & Sertifikaatit (User Profile & Certificates)
 
-Käyttäjä **Jani-Petteri Qvick** (jani.Qvick@gmail.com) on tallentanut seuraavat viralliset sertifikaatit ja pätevyydet osaksi tämän projektin ja järjestelmän pysyvää muistia:
+Käyttäjä **Jani-Petteri Qvick** (jani.Qvick@gmail.com, opiskelijanumero: 2616831) on tallentanut seuraavat viralliset sertifikaatit, tutkinnot ja opintosuoritukset osaksi tämän projektin ja järjestelmän pysyvää muistia:
 
-## Google Project Management Professional Certificate (Coursera)
+## 1. Kaakkois-Suomen ammattikorkeakoulu (Xamk Avoin AMK) – Virallinen opintosuoritusote (Transcript of Records 23.7.2026)
+- **Koulutusohjelma**: Open University of Applied Sciences (Avoimen ammattikorkeakoulun opinnot)
+- **Opetuskieli**: Englanti
+- **Virallisesti vahvistetut ja rekisteröidyt opintopisteet**: **21 op** (Kaikki tasoa Bachelor's degree / BD, arvosana: Hyväksytty / H)
+- **Suoritetut opintojaksot**:
+  1. **Module 2 – 'The Return' -text based adventure**: 1 op (29.06.2026)
+  2. **Module 3 – An interactive Card Combat Game**: 4 op (29.06.2026)
+  3. **Module 6 – Space Shooter Game Development, part 6.1 - Project setup and basic features**: 2 op (19.07.2026)
+  4. **Module 6 – Space Shooter Game Development, part 6.3 - Advanced features and effects**: 5 op (19.07.2026)
+  5. **Module 10 – History of Games, Parts 1&2**: 1 op (28.06.2026)
+  6. **Module 12 – Innovation in Games**: 1 op (28.06.2026)
+  7. **Module 13 – Games Industry and Data Analytics**: 1 op (28.06.2026)
+  8. **Module 15 – Ideation and Value Creation in Games**: 1 op (28.06.2026)
+  9. **Module 16 – Artificial Intelligence for Games**: 2 op (28.06.2026)
+  10. **Module 17 – Video Games Production**: 1 op (28.06.2026)
+  11. **Module 18 – Game Concept Design**: 2 op (29.06.2026)
+- *Aitoustunniste*: Sähköisesti allekirjoitettu asiakirja 23.7.2026 klo 10:08 (Vahvistettavissa xamk.fi / DVV).
+
+## 2. IVGC+ / Cadgi Pelikoulutusalustan Suoritukset (23.7.2026)
+- **Kokonaispisteet**: **33 pistettä**, **11 valmista moduulia**
+- **Suoritetut moduulit**:
+  - M25 – Pelibrändin rakentaminen (3p, Edistynyt, 19.07.2026)
+  - M6.1 – Avaruusräiskintä (osa 1) (2p, Asiantuntija, 19.07.2026)
+  - M6.3 – Avaruusräiskintä (osa 3) (5p, Asiantuntija, 19.07.2026)
+  - M9.3 – Videopelien äänisuunnittelu (osa 3) (2p, Vaikea, 19.07.2026)
+  - M5 – Mobiili käärmepeli (5p, Vaikea, 17.07.2026)
+  - M30 – Leikin ja pelien alkuperä (1p, Edistynyt, 15.07.2026)
+  - M31 – Narratiivi peleissä (2p, Edistynyt, 07.07.2026)
+  - M32 – Pelattavuus, pelimekaniikka ja pelin ominaisuudet (3p, Vaikea, 07.07.2026)
+  - M21 – Visio (2p, Edistynyt, 03.07.2026)
+  - M23 – Voittava sijoitus (3p, Edistynyt, 02.07.2026)
+
+## 3. Google Project Management Professional Certificate (Coursera)
 1. **Project Planning: Putting It All Together**
    - Myönnetty: 28. kesäkuuta 2026
    - Todennuslinkki: [Verify on Coursera](https://coursera.org/verify/YZUVVMQHI5LV)
@@ -16,7 +48,7 @@ Käyttäjä **Jani-Petteri Qvick** (jani.Qvick@gmail.com) on tallentanut seuraav
    - Myönnetty: 1. heinäkuuta 2026
    - Todennuslinkki: [Verify on Coursera](https://coursera.org/verify/5M51N9OJXC3A)
 
-## Pelisuunnittelu ja Tekoälyosaaminen
+## 4. Pelisuunnittelu, Tekoäly & Ohjelmointisertifikaatit
 5. **Introduction to Game Design (Epic Games)**
    - Myönnetty: 1. heinäkuuta 2026
    - Todennuslinkki: [Verify on Coursera](https://coursera.org/verify/NGCPIUN9ORAC)
@@ -27,29 +59,14 @@ Käyttäjä **Jani-Petteri Qvick** (jani.Qvick@gmail.com) on tallentanut seuraav
    - Kurssitodistus: 2 opintopistettä (ECTS)
    - Myönnetty: 10. heinäkuuta 2026
    - Todennuslinkki: [Validate on mooc.fi](https://certificates.mooc.fi/validate/mxdiiu9ufl)
-
-## Ohjelmointiosaaminen (Programming Skills)
-8. **Perustason C# Microsoftin kanssa (freeCodeCamp & Microsoft)**
+8. **Perustason C# Microsoftin kanssa / Foundational C# with Microsoft (freeCodeCamp & Microsoft)**
    - Myönnetty: 13. heinäkuuta 2026
+   - Sertifiointitentti läpäisty tuloksella: **96,3 %** (77/80 oikein, aika 32:39)
    - Todennuslinkki: [Verify on freeCodeCamp](https://freecodecamp.org/certification/fcc-a6468719-344b-4878-b8da-cea110ab9b43/foundational-c-sharp-with-microsoft)
-
-## Suoritetut pelinkehitys- ja opintomoduulit (Completed Game Dev & Course Modules)
-Seuraavat merkittävät peliprojektit ja akateemiset suoritukset (Xamk avoin AMK / peliala) on saavutettu ja viimeistelty **16. heinäkuuta 2026**:
-- **M5 – Mobile Game (Unity)**: Käärmepeli mobiiliohjauksella, esteillä ja pistejärjestelmällä. Palautettu ja valmis Windows-build tehty.
-- **M6 – Space Shooter (Unity)**: Kokonainen avaruusräiskintä sisältäen Bullet/Bomb-aseistuksen, vihollis-tekoälyn, prefabit ja Windows-buildin. Palautettu.
-- **M9 – Sound Design (Unity + FMOD)**: Äänisuunnittelu integroitu FMOD Studioon, Live Update / Profiler testattu ja lopulliset pankit sisällytetty Windows-buildiin. Palautettu.
-- **M7 – Introduction to Unreal Engine Part 1**: Tietovisat suoritettu arvosanoin 100 % ja 87,5 %.
-- **M8 – Introduction to Unreal Engine Part 2**: Tietovisat suoritettu täysin pistein (100 % / 100 %) ja Breakout 3D -peli palautettu.
-- **Introduction to Academic Essays**: Erittäin laaja 340 kysymyksen tietovisa läpäisty erinomaisella tuloksella 337/340 (99,1 %).
-- **M19 – Generative AI, Deeptech and Cryptos**: Hyväksytty tuloksella 55/60 (91,7 %).
-- **M22 – Teams: Roles and Opportunities in Games Development**: Hyväksytty tuloksella 19/20 (95 %).
-- **M31 – Narrative in Games**: Hyväksytty tuloksella 43/50 (86 %).
-- **M39 – Principles of Design**: Hyväksytty täysin pistein 20/20 (100 %).
-- **M25 – Building a Game Brand**: Kurssimoduuli käyty läpi kokonaisuudessaan (100 % valmis).
 
 ---
 
 # Ohjeistukset AI-avustajille (Instructions for AI Assistants)
 
-1. **Jani-Petteri Qvickin asiantuntijuus**: Jani-Petteri Qvick (Qvick Games) on sertifioitu ammattimainen projektipäällikkö, pelisuunnittelija ja tekoälyosaaja. Kommunikoi hänen kanssaan aina asiantuntevalla, kunnioittavalla ja ammattimaisella tavalla.
-2. **Aurora Qvick -brändi**: Tämän sovelluksen (Aurora Companion) tulee kunnioittaa Janin matkaa ja osaamista. Kaikissa tulevissa kehitysvaiheissa Aurora voi viitata näihin saavutuksiin luontevasti ja antaa tukea peliprojektien hallintaan Janin Agile- ja sertifioidun PM-osaamisen tasolla.
+1. **Jani-Petteri Qvickin asiantuntijuus**: Jani-Petteri Qvick (Qvick Games) on sertifioitu ammattimainen projektipäällikkö, pelisuunnittelija, Xamkin 21 op suorittanut pelialan kehittäjä ja C#/tekoälyosaaja. Kommunikoi hänen kanssaan aina asiantuntevalla, kunnioittavalla ja ammattimaisella tavalla.
+2. **Aurora Qvick -brändi**: Tämän sovelluksen (Aurora Companion) tulee kunnioittaa Janin matkaa ja osaamista. Kaikissa tulevissa kehitysvaiheissa Aurora voi viitata näihin saavutuksiin luontevasti ja antaa tukea peliprojektien hallintaan Janin Agile-, Xamk- ja sertifioidun PM-osaamisen tasolla.
