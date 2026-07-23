@@ -46,15 +46,16 @@ export function mapMemoryToCloudPayload(mem: Partial<Memory>): Partial<CloudMemo
   return {
     id: mem.id,
     memoryType: categoryToMemoryType(category),
-    title: text.length > 50 ? text.substring(0, 47) + '...' : (text || 'Muisto'),
+    title: mem.title || (text.length > 50 ? text.substring(0, 47) + '...' : (text || 'Muisto')),
     content: text,
     summary: text.length > 100 ? text.substring(0, 97) + '...' : text,
-    importance: 3,
+    importance: mem.importance !== undefined ? mem.importance : 3,
     confidence: 1.0,
     sourceType: 'user_input',
-    tags: mem.tags || [category],
+    relatedProjectIds: mem.projectId ? [mem.projectId] : [],
+    tags: mem.tags && mem.tags.length > 0 ? mem.tags : [category],
     occurredAt: mem.createdAt || now,
-    isPinned: false,
+    isPinned: mem.isPinned || false,
     isArchived: mem.isArchived || false,
     isDeleted: mem.isDeleted || false,
     embeddingStatus: 'none',
@@ -86,6 +87,7 @@ class CloudMemorySyncAdapter {
       } else {
         enqueueMemoryOp({
           memoryId: mem.id,
+          ownerUid: userId || 'unassigned',
           opType: 'CREATE',
           payload,
           baseTimestamp: mem.createdAt || new Date().toISOString()
@@ -110,6 +112,7 @@ class CloudMemorySyncAdapter {
       } else {
         enqueueMemoryOp({
           memoryId,
+          ownerUid: userId || 'unassigned',
           opType: 'UPDATE',
           payload,
           baseTimestamp: updates.localUpdatedAt || new Date().toISOString()
@@ -133,6 +136,7 @@ class CloudMemorySyncAdapter {
       } else {
         enqueueMemoryOp({
           memoryId,
+          ownerUid: userId || 'unassigned',
           opType: 'ARCHIVE',
           payload: { isArchived: true, localUpdatedAt: new Date().toISOString() },
           baseTimestamp: new Date().toISOString()
@@ -156,6 +160,7 @@ class CloudMemorySyncAdapter {
       } else {
         enqueueMemoryOp({
           memoryId,
+          ownerUid: userId || 'unassigned',
           opType: 'RESTORE',
           payload: { isArchived: false, isDeleted: false, localUpdatedAt: new Date().toISOString() },
           baseTimestamp: new Date().toISOString()
@@ -179,6 +184,7 @@ class CloudMemorySyncAdapter {
       } else {
         enqueueMemoryOp({
           memoryId,
+          ownerUid: userId || 'unassigned',
           opType: 'SOFT_DELETE',
           payload: { isDeleted: true, localUpdatedAt: new Date().toISOString() },
           baseTimestamp: new Date().toISOString()

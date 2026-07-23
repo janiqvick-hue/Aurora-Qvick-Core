@@ -9,8 +9,12 @@ export interface Memory {
   id: string;
   text: string;
   createdAt: string;
+  title?: string;
   category?: MemoryCategory;
   tags?: string[];
+  isPinned?: boolean;
+  importance?: number;
+  projectId?: string | null;
   syncStatus?: 'local_only' | 'pending_sync' | 'synced' | 'conflict' | 'sync_error';
   localUpdatedAt?: string;
   cloudUpdatedAt?: string;

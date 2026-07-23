@@ -51,6 +51,7 @@ export interface CloudMemoryData {
 export interface QueuedMemoryOp {
   queueId: string;
   memoryId: string;
+  ownerUid?: string; // Account isolation identifier
   opType: 'CREATE' | 'UPDATE' | 'ARCHIVE' | 'RESTORE' | 'SOFT_DELETE';
   payload?: Partial<CloudMemoryData>;
   baseTimestamp?: string; // Captured local base timestamp when op was queued
@@ -79,25 +80,29 @@ export function saveMemorySyncQueue(queue: QueuedMemoryOp[]): void {
 }
 
 /**
- * Deterministic operation compaction per memory ID (Phase 2.1.1 Task 4)
+ * Deterministic operation compaction per memory ID and owner (Phase 2.2.1 Task 2 Account Isolation)
  */
 export function compactMemoryQueue(queue: QueuedMemoryOp[]): QueuedMemoryOp[] {
   const memoryGroups = new Map<string, QueuedMemoryOp[]>();
 
   for (const op of queue) {
-    const group = memoryGroups.get(op.memoryId) || [];
+    const ownerKey = op.ownerUid || 'unassigned';
+    const groupKey = `${ownerKey}::${op.memoryId}`;
+    const group = memoryGroups.get(groupKey) || [];
     group.push(op);
-    memoryGroups.set(op.memoryId, group);
+    memoryGroups.set(groupKey, group);
   }
 
   const compacted: QueuedMemoryOp[] = [];
 
-  for (const [memoryId, ops] of memoryGroups.entries()) {
+  for (const [groupKey, ops] of memoryGroups.entries()) {
     if (ops.length === 1) {
       compacted.push(ops[0]);
       continue;
     }
 
+    const ownerUid = ops[0].ownerUid;
+    const memoryId = ops[0].memoryId;
     let hasCreate = ops.some(o => o.opType === 'CREATE');
     let mergedPayload: Partial<CloudMemoryData> = {};
     let finalOpType: 'CREATE' | 'UPDATE' | 'ARCHIVE' | 'RESTORE' | 'SOFT_DELETE' = hasCreate ? 'CREATE' : 'UPDATE';
@@ -128,6 +133,7 @@ export function compactMemoryQueue(queue: QueuedMemoryOp[]): QueuedMemoryOp[] {
     compacted.push({
       queueId: `qop-compacted-${Date.now()}-${memoryId}`,
       memoryId,
+      ownerUid,
       opType: finalOpType,
       payload: mergedPayload,
       baseTimestamp: baseTime,
@@ -143,6 +149,7 @@ export function enqueueMemoryOp(op: Omit<QueuedMemoryOp, 'queueId' | 'timestamp'
   const queue = getMemorySyncQueue();
   const newOp: QueuedMemoryOp = {
     ...op,
+    ownerUid: op.ownerUid || 'unassigned',
     queueId: `qop-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
     baseTimestamp: op.baseTimestamp || op.payload?.localUpdatedAt || new Date().toISOString(),
     timestamp: new Date().toISOString(),
@@ -165,17 +172,28 @@ export async function flushMemorySyncQueue(userId: string): Promise<void> {
     const remainingQueue: QueuedMemoryOp[] = [];
 
     for (const item of queue) {
+      // Account isolation guard (Task 2 Option B policy):
+      // Operations owned by a different authenticated user (item.ownerUid !== userId) remain untouched.
+      if (item.ownerUid && item.ownerUid !== 'unassigned' && item.ownerUid !== userId) {
+        remainingQueue.push(item);
+        continue;
+      }
+
+      // Claim unassigned operations for first authenticated user
+      const targetUid = userId;
+      item.ownerUid = targetUid;
+
       try {
         if (item.opType === 'CREATE' && item.payload) {
-          await createMemory(userId, item.payload, false);
+          await createMemory(targetUid, item.payload, false);
         } else if (item.opType === 'UPDATE' && item.payload) {
-          await safeUpdateMemoryWithPreCheck(userId, item.memoryId, item.payload, item.baseTimestamp);
+          await safeUpdateMemoryWithPreCheck(targetUid, item.memoryId, item.payload, item.baseTimestamp);
         } else if (item.opType === 'ARCHIVE') {
-          await safeUpdateMemoryWithPreCheck(userId, item.memoryId, { isArchived: true }, item.baseTimestamp);
+          await safeUpdateMemoryWithPreCheck(targetUid, item.memoryId, { isArchived: true }, item.baseTimestamp);
         } else if (item.opType === 'RESTORE') {
-          await safeUpdateMemoryWithPreCheck(userId, item.memoryId, { isArchived: false, isDeleted: false }, item.baseTimestamp);
+          await safeUpdateMemoryWithPreCheck(targetUid, item.memoryId, { isArchived: false, isDeleted: false }, item.baseTimestamp);
         } else if (item.opType === 'SOFT_DELETE') {
-          await safeUpdateMemoryWithPreCheck(userId, item.memoryId, { isDeleted: true }, item.baseTimestamp);
+          await safeUpdateMemoryWithPreCheck(targetUid, item.memoryId, { isDeleted: true }, item.baseTimestamp);
         }
       } catch (err) {
         console.warn(`Queue operation ${item.opType} for ${item.memoryId} failed, retaining in queue:`, err);

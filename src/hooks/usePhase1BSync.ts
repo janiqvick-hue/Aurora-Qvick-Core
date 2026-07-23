@@ -242,15 +242,17 @@ export function usePhase1BSync() {
   useEffect(() => {
     if (!user || !isFirebaseAvailable) return;
 
-    // Flush any pending queue operations when connected/authenticated
-    flushMemorySyncQueue(user.uid).catch((err) =>
+    const currentUid = user.uid;
+
+    // Flush any pending queue operations when connected/authenticated for current UID
+    flushMemorySyncQueue(currentUid).catch((err) =>
       console.warn("Queue flush on connect notice:", err)
     );
 
     // Register browser online event for network recovery queue flush (Phase 2.1.1 Task 5)
     const handleOnline = () => {
-      if (user && isFirebaseAvailable) {
-        flushMemorySyncQueue(user.uid).catch((err) =>
+      if (user && user.uid === currentUid && isFirebaseAvailable) {
+        flushMemorySyncQueue(currentUid).catch((err) =>
           console.warn("Queue flush on network recovery notice:", err)
         );
       }
@@ -258,8 +260,10 @@ export function usePhase1BSync() {
     window.addEventListener('online', handleOnline);
 
     const unsubscribe = subscribeMemories(
-      user.uid,
+      currentUid,
       (cloudMemories) => {
+        // Account isolation guard: Abort if user switched accounts while async callback fired
+        if (user?.uid !== currentUid) return;
         if (!cloudMemories) return;
 
         try {
@@ -279,7 +283,12 @@ export function usePhase1BSync() {
             const mappedFromCloud = {
               id: cm.id,
               text: contentText,
+              title: cm.title || undefined,
               category: mappedCategory,
+              tags: cm.tags || [],
+              isPinned: cm.isPinned || false,
+              importance: typeof cm.importance === 'number' ? cm.importance : 3,
+              projectId: cm.relatedProjectIds && cm.relatedProjectIds.length > 0 ? cm.relatedProjectIds[0] : null,
               createdAt: cm.occurredAt || (typeof cm.createdAt === 'string' ? cm.createdAt : new Date().toISOString()),
               isArchived: cm.isArchived || false,
               isDeleted: cm.isDeleted || false,
