@@ -22,6 +22,18 @@ Aurora is designed to evolve beyond a traditional chatbot into a persistent digi
 - Google AI Studio
 - Vercel
 
-## Status
+Project Status
 
 🚧 Active Development
+
+Current version:
+Aurora Core Alpha 0.2
+
+Next milestones
+• Persistent memory
+• Natural voice
+• Aurora Home
+• AI workflow assistant
+• Unity integration
+
+Built with ❤️ by Qvick Games
