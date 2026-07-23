@@ -9,6 +9,8 @@ import { knowledgeLibraryEngine } from "../core/KnowledgeLibraryEngine";
 import { ideaVaultEngine } from "../core/IdeaVaultEngine";
 import { intelligentSearchEngine } from "../core/IntelligentSearchEngine";
 import { documentationAssistantEngine } from "../core/DocumentationAssistantEngine";
+import { projectIdentityEngine } from "../core/ProjectIdentityEngine";
+import { ProjectIdentityCard } from "./ProjectIdentityCard";
 import { KnowledgeCategory, IdeaCategory, SearchResultItem } from "../types";
 import { 
   FolderGit2, 
@@ -284,58 +286,51 @@ export default function QvickGamesEcosystemModal({
             </div>
           )}
 
-          {/* TAB 2: PROJECTS */}
+          {/* TAB 2: PROJECTS & IDENTITIES */}
           {activeTab === 'projects' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fadeIn">
-              {projects.map(proj => (
-                <div key={proj.id} className="bg-[#140b05] p-4 rounded-xl border border-[#3d2b1d] hover:border-amber-500/40 transition-all space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[9px] font-mono text-stone-500 uppercase block">{proj.category}</span>
-                      <h3 className="text-sm font-bold text-amber-200">{proj.name}</h3>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#0b0603] text-amber-400 border border-[#3d2b1d] font-semibold">
-                      {proj.version}
-                    </span>
-                  </div>
+            <div className="space-y-4 animate-fadeIn">
+              <div className="p-3 bg-[#140b05] border border-amber-500/30 rounded-xl flex items-center justify-between text-xs font-mono">
+                <span className="text-amber-300 font-bold flex items-center gap-2">
+                  <FolderGit2 className="w-4 h-4 text-amber-400" />
+                  YHDISTETTY PROJEKTI-IDENTITEETTIJÄRJESTELMÄ ({projectIdentityEngine.getProjects().length} Hanketta)
+                </span>
+                <span className="text-stone-400">Jokaisella hankkeella yhtenäinen tietomalli</span>
+              </div>
 
-                  <p className="text-xs text-stone-300 font-sans leading-relaxed">{proj.description}</p>
-
-                  {/* Progress bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[10px] text-stone-400 font-mono">
-                      <span>Valmius</span>
-                      <span className="text-amber-300 font-bold">{proj.progress}%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-[#0b0603] rounded-full overflow-hidden border border-[#3d2b1d]">
-                      <div className="h-full bg-amber-500" style={{ width: `${proj.progress}%` }} />
-                    </div>
-                  </div>
-
-                  {/* Tech stack pills */}
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {proj.techStack.map((tech, idx) => (
-                      <span key={idx} className="text-[9px] font-mono px-1.5 py-0.5 bg-[#0b0603] border border-[#3d2b1d] text-stone-400 rounded">
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Select or open */}
-                  {onSelectProject && (
-                    <button
-                      onClick={() => {
-                        onSelectProject(proj.name);
-                        onClose();
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {projectIdentityEngine.getProjects().map(proj => (
+                  <div key={proj.id} className="space-y-2">
+                    <ProjectIdentityCard 
+                      project={proj} 
+                      onSelectRelated={(relName) => {
+                        const target = projectIdentityEngine.getProjectByName(relName);
+                        if (target && onSelectProject) {
+                          onSelectProject(target.name);
+                          onClose();
+                        }
                       }}
-                      className="w-full py-1.5 bg-[#1e1107] hover:bg-amber-500/20 border border-[#3d2b1d] hover:border-amber-500/40 text-amber-300 rounded text-xs transition-all cursor-pointer flex items-center justify-center gap-1 font-sans"
-                    >
-                      <span>Valitse aktiiviseksi hankkeeksi</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))}
+                      onOpenBrain={(pName) => {
+                        if (onSelectProject) {
+                          onSelectProject(pName);
+                          onClose();
+                        }
+                      }}
+                    />
+                    {onSelectProject && (
+                      <button
+                        onClick={() => {
+                          onSelectProject(proj.name);
+                          onClose();
+                        }}
+                        className="w-full py-1.5 bg-[#1a110a] hover:bg-amber-500/20 border border-[#3d2b1d] hover:border-amber-500/40 text-amber-300 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-1 font-sans font-medium"
+                      >
+                        <span>Aseta aktiiviseksi työtilahankkeeksi</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

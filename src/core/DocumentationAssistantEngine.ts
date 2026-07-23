@@ -17,7 +17,7 @@ class DocumentationAssistantEngine {
         progressSummary: "Qvick Gamesin valmistunut ja virallisesti julkaistu elokuvallinen suomalainen murhamysteeri. Täysi peli sisältää 11 tutkintapaikkaa, interaktiivisen tutkintataulun, epäiltyjen kuulustelut, todisteinventaarion ja FMOD-äänimaailman.",
         completedFeatures: [
           "Elokuvallinen päävalikko, suomi & englanti lokalisaatio ja tallennusjärjestelmä",
-          "11 tutkintapaikkaa (Tupa, Keittiö, Antin huone, Vierashuone, Sauna, Venevalkama, Varasto, Laituri, Metsäpolku, Rantapolku, Pysäköintialue)",
+          "11 tutkintapaikkaa (Olohuone, Keittiö, Antin huone, Vierashuone, Sauna, Venevaja, Vanha varasto, Laituri, Metsäpolku, Rantapolku, Autopaikka)",
           "Interaktiivinen tutkintataulu, todisteinventaario ja vihjeiden kytkennät",
           "Epäiltyjen haastattelut, ristiriita-analyysi ja loppujatko",
           "FMOD-ambienssit, binauraalinen äänisuunnittelu ja Qvick Games -brändäys"

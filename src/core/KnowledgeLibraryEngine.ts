@@ -6,8 +6,18 @@ export const PRESET_KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
     title: "Murhamysteeri Mökillä - Arkkitehtuuri & Peli-integraatio",
     category: "Projects",
     summary: "Qvick Gamesin virallisesti julkaistu elokuvallinen suomalainen murhamysteeri (100% valmis lippulaivapeli).",
-    content: "Murhamysteeri Mökillä – Hiljaisen järven salaisuus on Qvick Gamesin valmistunut ja julkaistu lippulaivapeli. Pelissä tutkitaan 11 eri lokaatiota (mm. Tupa, Keittiö, Antin huone, Vierashuone, Sauna, Venevalkama, Varasto, Laituri, Metsäpolku, Rantapolku, Pysäköintialue). Pelaajat keräävät vihjeitä, hyödyntävät interaktiivista tutkintataulua ja inventaariota, kuulustelevat epäiltyjä ja ratkaisevat mysteerin elokuvallisessa suomalaisessa mökkitunnelmassa.",
+    content: "Murhamysteeri Mökillä – Hiljaisen järven salaisuus on Qvick Gamesin valmistunut ja virallisesti julkaistu lippulaivapeli. Pelissä tutkitaan 11 virallista tutkintapaikkaa: Olohuone (Living Room), Keittiö (Kitchen), Antin huone (Antti's Room), Vierashuone (Guest Room), Sauna, Venevaja (Boat Shed), Vanha varasto (Old Storage Building), Laituri (Dock), Metsäpolku (Forest Path), Rantapolku (Shore Path) ja Autopaikka (Parking Area). Pelaajat keräävät vihjeitä, hyödyntävät interaktiivista tutkintataulua ja inventaariota, kuulustelevat epäiltyjä ja ratkaisevat mysteerin elokuvallisessa suomalaisessa mökkitunnelmassa.",
     tags: ["Murhamysteeri", "React", "FMOD", "Narrative"],
+    lastUpdated: "2026-07-23",
+    author: "Jani-Petteri Qvick"
+  },
+  {
+    id: "kb-proj-2",
+    title: "Qvick Games Ecosystem Hierarchy & Dependency Relationships",
+    category: "Projects",
+    summary: "Ekosysteemin rakenne: Murhamysteeri Mökillä → Qvick Games Portfolio → Aurora Core → Aurora Home → Future Projects.",
+    content: "Qvick Games -ekosysteemin projekti-identiteetit ja riippuvuudet muodostavat saumattoman ketjun. Lippulaivapeli Murhamysteeri Mökillä syöttää brändiarvoa Qvick Games Portfoliolle. Portfolio tuki Aurora Core -alustan kehitystä. Aurora Core puolestaan syöttää älykkyyttä Aurora Home -ympäristölle sekä tuleville pelihankkeille kuten Järven Vartijat ja Lumottu Kymi. Aurora antaa myös tilakohtaiset suositukset (esim. julkaistulle Murhamysteerille: Marketing, Portfolio, Updates, Community).",
+    tags: ["Ecosystem", "Architecture", "Dependencies", "ProjectBrain", "QvickGames"],
     lastUpdated: "2026-07-23",
     author: "Jani-Petteri Qvick"
   },

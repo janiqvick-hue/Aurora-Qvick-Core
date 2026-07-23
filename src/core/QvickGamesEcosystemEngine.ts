@@ -64,7 +64,7 @@ class QvickGamesEcosystemEngine {
         category: "Lippulaiva Salapoliisipeli (Julkaistu)",
         description: "Qvick Gamesin virallisesti julkaistu elokuvallinen suomalainen murhamysteeri mökkimiljöössä (Hiljaisen järven salaisuus). Pelaaja tutkii ympäristöä, kerää todisteita, kuulustelee epäiltyjä ja ratkaisee mysteerin.",
         techStack: ["React", "TypeScript", "Tailwind CSS", "FMOD Sound", "Gemini AI"],
-        keyFeatures: ["11 tutkintapaikkaa (Tupa, Keittiö, Antin huone, Sauna, Venevalkama ym.)", "Interaktiivinen tutkintataulu & todisteinventaario", "Täysi suomi & englanti lokalisaatio", "FMOD-äänimaailma, tallennusjärjestelmä & elokuvallinen valikko"],
+        keyFeatures: ["11 tutkintapaikkaa (Olohuone, Keittiö, Antin huone, Vierashuone, Sauna, Venevaja, Vanha varasto, Laituri, Metsäpolku, Rantapolku, Autopaikka)", "Interaktiivinen tutkintataulu & todisteinventaario", "Täysi suomi & englanti lokalisaatio", "FMOD-äänimaailma, tallennusjärjestelmä & elokuvallinen valikko"],
         githubRepo: "Jani-PetteriQvick/murhamysteeri-mokilla",
         lastUpdated: "2026-07-23"
       },

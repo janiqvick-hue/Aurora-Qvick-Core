@@ -32,18 +32,137 @@ export interface ProjectSubProgress {
   code: number;
 }
 
+export type ProjectStatus = 
+  | 'Planning' 
+  | 'Prototype' 
+  | 'In Development' 
+  | 'Testing' 
+  | 'Released' 
+  | 'Maintenance' 
+  | 'Archived';
+
+export type ProjectPriority = 
+  | 'Low' 
+  | 'Normal' 
+  | 'High' 
+  | 'Critical' 
+  | 'Completed';
+
+export type ProjectCategory = 
+  | 'Game' 
+  | 'AI' 
+  | 'Website' 
+  | 'Research' 
+  | 'Education' 
+  | 'Portfolio' 
+  | 'Internal Tool';
+
+export type EcosystemRole = 
+  | 'Main Project' 
+  | 'Sub Project' 
+  | 'Related Project' 
+  | 'Completed Project' 
+  | 'Future Project' 
+  | 'Support Project';
+
+export interface ProjectIdentity {
+  id: string;
+  name: string;
+  codeName?: string;
+  type: string;
+  status: ProjectStatus;
+  priority: ProjectPriority;
+  progress: number;
+  subProgress?: ProjectSubProgress;
+  description: string;
+  category: ProjectCategory;
+  roleInEcosystem?: EcosystemRole;
+  relationshipType?: string;
+  supportsProjects?: string[];
+  dependsOnProjects?: string[];
+  recommendedFocus?: string[];
+  technologies: string[];
+  platform: string[];
+  repository?: string;
+  website?: string;
+  portfolio?: string;
+  relatedProjects: string[];
+  currentPhase: string;
+  nextMilestone: string;
+  completedMilestones: string[];
+  currentGoals: string[];
+  futurePlans: string[];
+  documentation?: string[];
+  visualAssets?: string[];
+  lastUpdated: string;
+  isActive?: boolean;
+}
+
+export type ProjectVisualCategory = 
+  | 'Hero image' 
+  | 'Screenshots' 
+  | 'Concept Art' 
+  | 'Character Images' 
+  | 'Environment Images' 
+  | 'UI Images' 
+  | 'Documents' 
+  | 'Videos' 
+  | 'Reference Images';
+
+export interface ProjectVisualAsset {
+  id: string;
+  projectId: string;
+  projectName: string;
+  title: string;
+  url: string;
+  category: ProjectVisualCategory;
+  description: string;
+  addedAt: string;
+  tags: string[];
+  milestoneTag?: string;
+  isHero?: boolean;
+}
+
+export interface ProjectVisualTimelineEvent {
+  id: string;
+  projectId: string;
+  projectName: string;
+  date: string;
+  title: string;
+  type: 'Project Started' | 'Major Milestone' | 'Latest Screenshot' | 'Newest Concept Art' | 'Latest Documentation' | 'Visual Asset Added';
+  description: string;
+  assetUrl?: string;
+  category?: ProjectVisualCategory;
+}
+
 export interface Project {
   id: string;
   name: string;
   description: string;
   isActive: boolean;
+  type?: string;
   status?: string;
+  priority?: string;
+  category?: string;
+  roleInEcosystem?: EcosystemRole;
+  relationshipType?: string;
+  supportsProjects?: string[];
+  dependsOnProjects?: string[];
+  recommendedFocus?: string[];
   progress?: number;
   subProgress?: ProjectSubProgress;
   lastModified?: string;
+  lastUpdated?: string;
   activeTasks?: string[];
   completedMilestones?: string[];
   notes?: string;
+  technologies?: string[];
+  platform?: string[];
+  relatedProjects?: string[];
+  currentPhase?: string;
+  nextMilestone?: string;
+  currentGoals?: string[];
+  futurePlans?: string[];
 }
 
 export interface JournalEntry {

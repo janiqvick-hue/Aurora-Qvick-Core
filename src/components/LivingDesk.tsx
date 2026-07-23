@@ -38,7 +38,7 @@ export default memo(function LivingDesk({ activeProjectName, onSelectPropAction 
         {
           id: "map",
           name: "11 tutkintapaikan pohjakartta",
-          description: "Julkaistun pelin 11 tutkintapaikkaa (Tupa, Keittiö, Antin huone, Sauna, Venevalkama ym.).",
+          description: "Julkaistun pelin 11 tutkintapaikkaa (Olohuone, Keittiö, Antin huone, Vierashuone, Sauna, Venevaja, Vanha varasto, Laituri, Metsäpolku, Rantapolku, Autopaikka).",
           icon: Map,
           actionText: "Tarkastellaan Murhamysteerin 11 valmista pelilokaatiota yhdessä."
         },

@@ -5,8 +5,9 @@ import { livingPresenceEngine, LivingPresenceSnapshot } from "../core/living/Liv
 import { livingStateEngine } from "../core/LivingStateEngine";
 import { auroraVoice } from "../services/auroraVoice";
 import { auroraMemoryEngine } from "../core/AuroraMemoryEngine";
+import { projectVisualMemoryEngine } from "../core/ProjectVisualMemoryEngine";
 import cabinLoginBg from "../assets/images/cabin_login_bg_1784655680190.jpg";
-import { DEFAULT_BRAIN_DATA } from "./ProjectBrain";
+import { projectIdentityEngine } from "../core/ProjectIdentityEngine";
 import WorkspaceAwareness from "./WorkspaceAwareness";
 import MultimodalComposer, { ChatAttachment } from "./MultimodalComposer";
 
@@ -189,6 +190,17 @@ export default memo(function LivingCabinRoom({
           attSummary += `\n[DOKUMENTTI/KOODI: "${att.name}"]\n\`\`\`\n${(att.content || "").substring(0, 2500)}\n\`\`\`\n`;
         } else if (att.type === 'image') {
           attSummary += `\n[KUVA/KUVAKAAPPAUS: "${att.name}" (${att.mimeType})]\n`;
+          // Smart Image Recognition & Auto Attachment
+          try {
+            projectVisualMemoryEngine.processAndAttachAsset({
+              title: att.name,
+              url: att.previewUrl || att.base64 || "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1000&q=80",
+              projectName: currentProjectName,
+              description: `Liitetty keskustelussa hankkeelle ${currentProjectName}.`
+            });
+          } catch (e) {
+            // Fallback
+          }
         } else {
           attSummary += `\n[TIEDOSTO: "${att.name}" (${att.mimeType}, ${att.size} B)]\n`;
         }
@@ -215,7 +227,8 @@ export default memo(function LivingCabinRoom({
 
     try {
       const memoryContext = auroraMemoryEngine.retrieveRelevantContext(userText);
-      const contextPrompt = `\n\n[Jani työskentelee kanssasi projektin "${currentProjectName}" parissa Lopen mökillä. Aurora oli juuri: ${snapshot.activity.label.toLowerCase()}.${memoryContext ? ` ${memoryContext}` : ""} Pohdi vastaustasi rauhallisesti mökin tunnelmassa.]`;
+      const visualContext = projectVisualMemoryEngine.getVisualMemoryContext(currentProjectName);
+      const contextPrompt = `\n\n[Jani työskentelee kanssasi projektin "${currentProjectName}" parissa Lopen mökillä. Aurora oli juuri: ${snapshot.activity.label.toLowerCase()}.${memoryContext ? ` ${memoryContext}` : ""}${visualContext ? ` ${visualContext}` : ""} Pohdi vastaustasi rauhallisesti mökin tunnelmassa ja käytä visuaalisia muistoja luontevasti.]`;
 
       const apiMessages = updatedMessages.map((msg, idx) => {
         if (idx === updatedMessages.length - 1) {
@@ -328,16 +341,24 @@ export default memo(function LivingCabinRoom({
 
   const activeBrainData = useMemo(() => {
     try {
-      const saved = localStorage.getItem("aurora_project_brain_v3");
+      const saved = localStorage.getItem("aurora_project_brain_v4") || localStorage.getItem("aurora_project_brain_v3");
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed[currentProjectName]) return parsed[currentProjectName];
       }
     } catch (e) {}
-    return (
-      DEFAULT_BRAIN_DATA[currentProjectName] ||
-      DEFAULT_BRAIN_DATA["Murhamysteeri Mökillä"]
-    );
+    const p = projectIdentityEngine.getProjectByName(currentProjectName) || projectIdentityEngine.getProjectByName("Murhamysteeri Mökillä");
+    return p ? {
+      subProgress: p.subProgress || { visual: 80, story: 85, audio: 70, testing: 50, code: 90 },
+      activeTasks: p.currentGoals || [],
+      completedMilestones: p.completedMilestones || [],
+      auroraRecommendation: p.recommendedFocus?.[0] || p.description
+    } : {
+      subProgress: { visual: 80, story: 85, audio: 70, testing: 50, code: 90 },
+      activeTasks: [],
+      completedMilestones: [],
+      auroraRecommendation: ""
+    };
   }, [currentProjectName, snapshot]);
 
   const recentJournalEntries = useMemo(() => {

@@ -3,15 +3,31 @@ import { auroraMemoryEngine } from "./AuroraMemoryEngine";
 import { knowledgeLibraryEngine } from "./KnowledgeLibraryEngine";
 import { ideaVaultEngine } from "./IdeaVaultEngine";
 import { qvickGamesEcosystemEngine } from "./QvickGamesEcosystemEngine";
+import { projectIdentityEngine } from "./ProjectIdentityEngine";
 
 class IntelligentSearchEngine {
   /**
-   * Performs an intelligent cross-system search over Diary, Memory, Project Brain, Knowledge Library, Idea Vault, and Documentation.
+   * Performs an intelligent cross-system search over Diary, Memory, Project Brain, Knowledge Library, Idea Vault, Documentation, and Project Identities.
    */
   public searchAll(query: string): SearchResultItem[] {
     const results: SearchResultItem[] = [];
     const q = query.toLowerCase().trim();
     if (!q) return results;
+
+    // 0. Search Project Identity Engine
+    const projectIdentities = projectIdentityEngine.searchProjects(q);
+    projectIdentities.forEach(p => {
+      results.push({
+        id: `src-[#identity]-${p.id}`,
+        sourceType: 'Project Brain',
+        title: `Projekti-Identiteetti: ${p.name} (${p.status})`,
+        snippet: `${p.type} • Tila: ${p.status} (${p.progress}%) • Teknologiat: ${p.technologies.join(", ")}. Seuraava virstanpylväs: ${p.nextMilestone}. ${p.description}`,
+        timestamp: p.lastUpdated,
+        category: p.category,
+        tags: [...p.technologies, ...p.platform, ...p.relatedProjects],
+        linkId: p.id
+      });
+    });
 
     // 1. Search Memory Engine
     const memories = auroraMemoryEngine.getMemories();

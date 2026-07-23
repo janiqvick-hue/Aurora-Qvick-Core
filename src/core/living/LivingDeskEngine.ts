@@ -42,7 +42,7 @@ export const DESK_CONFIGURATIONS: Record<string, DeskPropItem[]> = {
     {
       id: "crime_map",
       name: "11 tutkintapaikan pohjakartta",
-      description: "Julkaistun pelin 11 tutkintapaikkaa (Tupa, Keittiö, Antin huone, Sauna, Venevalkama ym.).",
+      description: "Julkaistun pelin 11 tutkintapaikkaa (Olohuone, Keittiö, Antin huone, Vierashuone, Sauna, Venevaja, Vanha varasto, Laituri, Metsäpolku, Rantapolku, Autopaikka).",
       iconName: "map",
       actionPrompt: "Tarkastellaan Murhamysteerin 11 valmista pelilokaatiota yhdessä.",
       unityPrefabName: "PF_Lakeside_Crime_Map",
