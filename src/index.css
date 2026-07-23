@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cinzel", Georgia, serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(28, 25, 23, 0.5); /* deep stone/warm dark */
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(217, 119, 6, 0.2); /* amber tint */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(217, 119, 6, 0.4);
+}
+
+/* Gentle pulsing animation for fireplace glow */
+@keyframes warm-glow {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+    filter: blur(100px);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.1);
+    filter: blur(120px);
+  }
+}
+
+.animate-warm-glow {
+  animation: warm-glow 8s ease-in-out infinite;
+}
+
+/* Float animation for sparks/embers */
+@keyframes float-spark {
+  0% {
+    transform: translateY(100vh) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(-20vh) translateX(50px) scale(0);
+    opacity: 0;
+  }
+}
+
+.animate-spark {
+  animation: float-spark 12s linear infinite;
+}
+
+/* Rain droplet falling animation */
+@keyframes fall {
+  0% {
+    transform: translateY(-50px) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(350px) translateX(10px);
+    opacity: 0;
+  }
+}
+
+/* Snow falling animation */
+@keyframes fall-snow {
+  0% {
+    transform: translateY(-20px) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(350px) translateX(25px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Steaming coffee cups */
+@keyframes steam {
+  0% {
+    transform: translateY(0) scaleX(1) scaleY(1);
+    opacity: 0;
+    filter: blur(1px);
+  }
+  20% {
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-15px) scaleX(1.3) scaleY(1.2) translateX(3px);
+    opacity: 0.3;
+    filter: blur(2px);
+  }
+  80% {
+    opacity: 0.1;
+  }
+  100% {
+    transform: translateY(-30px) scaleX(1.6) scaleY(1.4) translateX(-2px);
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+
+/* Flame animation for takka */
+@keyframes flame-tall {
+  0%, 100% {
+    transform: scaleY(1) scaleX(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scaleY(1.25) scaleX(0.92) translateY(-2px);
+    filter: brightness(1.15);
+  }
+  25% {
+    transform: scaleY(0.9) scaleX(1.1) translateX(1px);
+  }
+  75% {
+    transform: scaleY(1.1) scaleX(0.95) translateX(-1px);
+  }
+}
+
+.animate-steam {
+  animation: steam 3.5s ease-in-out infinite;
+}
+
+.animate-flame-tall {
+  animation: flame-tall 1.5s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Rain and snow CSS animations for high performance */
+@keyframes css-rain-slide {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(400px);
+  }
+}
+
+.animate-rain-slide {
+  animation: css-rain-slide 2.5s linear infinite;
+}
+
+.animate-heavy-rain-slide {
+  animation: css-rain-slide 1.2s linear infinite;
+}
+
+@keyframes css-snow-slide {
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(150px) translateX(10px);
+  }
+  100% {
+    transform: translateY(300px) translateX(0);
+  }
+}
+
+.animate-snow-slide {
+  animation: css-snow-slide 6s ease-in-out infinite;
+}
+
+
