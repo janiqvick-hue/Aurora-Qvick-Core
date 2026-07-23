@@ -2,6 +2,7 @@ import { useState, useEffect, FormEvent } from "react";
 import { Project, ProjectSubProgress } from "../types";
 import { projectIdentityEngine } from "../core/ProjectIdentityEngine";
 import { projectVisualMemoryEngine } from "../core/ProjectVisualMemoryEngine";
+import { usePhase1BSync } from "../hooks/usePhase1BSync";
 import ProjectGallery from "./ProjectGallery";
 import VisualTimeline from "./VisualTimeline";
 import { 
@@ -35,6 +36,7 @@ export default function ProjectBrain({ activeProject, onSelectProject }: Project
   const [newTaskInput, setNewTaskInput] = useState("");
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesInput, setNotesInput] = useState("");
+  const { syncCreateTask, syncUpdateTask, syncUpdateProject } = usePhase1BSync();
 
   const currentProjectName = activeProject?.name || "Murhamysteeri Mökillä";
   const identity = projectIdentityEngine.getProjectByName(currentProjectName);
@@ -109,13 +111,19 @@ export default function ProjectBrain({ activeProject, onSelectProject }: Project
     e.preventDefault();
     if (!newTaskInput.trim()) return;
 
+    const taskTitle = newTaskInput.trim();
     const updated = { ...projectsData };
     const pData = updated[currentProjectName] || { ...brain };
-    pData.activeTasks = [...(pData.activeTasks || []), newTaskInput.trim()];
+    pData.activeTasks = [...(pData.activeTasks || []), taskTitle];
     pData.lastModified = new Date().toLocaleDateString("fi-FI");
     updated[currentProjectName] = pData;
 
     saveBrainData(updated);
+    syncCreateTask({
+      title: taskTitle,
+      projectId: activeProject?.id || identity?.id || null,
+      status: 'todo'
+    });
     setNewTaskInput("");
   };
 
@@ -129,6 +137,12 @@ export default function ProjectBrain({ activeProject, onSelectProject }: Project
       pData.lastModified = new Date().toLocaleDateString("fi-FI");
       updated[currentProjectName] = pData;
       saveBrainData(updated);
+      syncCreateTask({
+        title: task,
+        projectId: activeProject?.id || identity?.id || null,
+        status: 'completed',
+        isCompleted: true
+      });
     }
   };
 

@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { X, Settings, Volume2, VolumeX, Flame, Sun, Moon, CloudRain, Snowflake, Play, Sparkles } from "lucide-react";
+import { X, Settings, Volume2, VolumeX, Flame, Sun, Moon, CloudRain, Snowflake, Play, Sparkles, ShieldCheck } from "lucide-react";
 import { auroraVoice } from "../services/auroraVoice";
+import { FirebaseAuthBadge } from "./AuthBoundary";
+import { usePhase1BSync } from "../hooks/usePhase1BSync";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -32,17 +34,20 @@ export default function SettingsModal({
   const [rate, setRateState] = useState<number>(auroraVoice.getRate());
   const [pitch, setPitchState] = useState<number>(auroraVoice.getPitch());
   const [isPlayingTest, setIsPlayingTest] = useState(false);
+  const { syncUpdateSettings } = usePhase1BSync();
 
   if (!isOpen) return null;
 
   const handleRateChange = (newRate: number) => {
     setRateState(newRate);
     auroraVoice.setRate(newRate);
+    syncUpdateSettings({ voiceRate: newRate });
   };
 
   const handlePitchChange = (newPitch: number) => {
     setPitchState(newPitch);
     auroraVoice.setPitch(newPitch);
+    syncUpdateSettings({ voicePitch: newPitch });
   };
 
   const handleTestVoice = () => {
@@ -219,6 +224,31 @@ export default function SettingsModal({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Firebase Cloud Identity & Authentication (Phase 1A) */}
+          <div className="space-y-3 pt-3 border-t border-[#3d2b1d]">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-serif text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                Firebase Cloud Identity
+              </label>
+              <span className="text-[10px] font-mono text-amber-400 bg-amber-950/60 border border-amber-800/60 px-2 py-0.5 rounded-full">
+                Phase 1A
+              </span>
+            </div>
+
+            <div className="bg-[#140e09] border border-[#3d2b1d] p-3.5 rounded-lg flex items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <span className="text-xs text-stone-200 block font-serif">Google Sign-In & Firestore /users/</span>
+                <p className="text-[11px] text-stone-400 font-sans">
+                  Suojatun käyttäjätilin ja pilvisynkronoinnin tunnisteet.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <FirebaseAuthBadge />
+              </div>
+            </div>
           </div>
         </div>
 

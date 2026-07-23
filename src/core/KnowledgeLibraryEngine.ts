@@ -143,11 +143,12 @@ class KnowledgeLibraryEngine {
   }
 
   public getAllArticles(): KnowledgeArticle[] {
-    return this.articles;
+    this.loadArticles();
+    return this.articles.filter(a => !(a as any).isDeleted);
   }
 
   public getArticlesByCategory(category: KnowledgeCategory): KnowledgeArticle[] {
-    return this.articles.filter(a => a.category === category);
+    return this.getAllArticles().filter(a => a.category === category);
   }
 
   public addArticle(article: Omit<KnowledgeArticle, 'id' | 'lastUpdated'>): KnowledgeArticle {
@@ -161,10 +162,38 @@ class KnowledgeLibraryEngine {
     return newArt;
   }
 
+  public updateArticle(id: string, updates: Partial<KnowledgeArticle>): KnowledgeArticle | null {
+    this.loadArticles();
+    const idx = this.articles.findIndex(a => a.id === id);
+    if (idx !== -1) {
+      this.articles[idx] = {
+        ...this.articles[idx],
+        ...updates,
+        lastUpdated: new Date().toISOString().split('T')[0]
+      };
+      this.saveArticles();
+      return this.articles[idx];
+    }
+    return null;
+  }
+
+  public archiveArticle(id: string) {
+    this.updateArticle(id, { isArchived: true } as any);
+  }
+
+  public restoreArticle(id: string) {
+    this.updateArticle(id, { isArchived: false, isDeleted: false } as any);
+  }
+
+  public softDeleteArticle(id: string) {
+    this.updateArticle(id, { isDeleted: true } as any);
+  }
+
   public searchArticles(query: string): KnowledgeArticle[] {
     const q = query.toLowerCase().trim();
-    if (!q) return this.articles;
-    return this.articles.filter(a => 
+    const active = this.getAllArticles();
+    if (!q) return active;
+    return active.filter(a => 
       a.title.toLowerCase().includes(q) ||
       a.summary.toLowerCase().includes(q) ||
       a.content.toLowerCase().includes(q) ||

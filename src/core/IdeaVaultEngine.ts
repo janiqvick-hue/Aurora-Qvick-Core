@@ -83,11 +83,12 @@ class IdeaVaultEngine {
   }
 
   public getAllIdeas(): IdeaItem[] {
-    return this.ideas;
+    this.loadIdeas();
+    return this.ideas.filter(i => !(i as any).isDeleted);
   }
 
   public getIdeasByCategory(category: IdeaCategory): IdeaItem[] {
-    return this.ideas.filter(i => i.category === category);
+    return this.getAllIdeas().filter(i => i.category === category);
   }
 
   public addIdea(title: string, category: IdeaCategory, description: string, impact: 'High' | 'Medium' | 'Low' = 'Medium'): IdeaItem {
@@ -118,12 +119,31 @@ class IdeaVaultEngine {
     return newIdea;
   }
 
-  public updateIdeaStatus(id: string, status: IdeaItem['status']) {
+  public updateIdea(id: string, updates: Partial<IdeaItem>): IdeaItem | null {
+    this.loadIdeas();
     const item = this.ideas.find(i => i.id === id);
     if (item) {
-      item.status = status;
+      Object.assign(item, updates);
       this.saveIdeas();
+      return item;
     }
+    return null;
+  }
+
+  public updateIdeaStatus(id: string, status: IdeaItem['status']) {
+    this.updateIdea(id, { status });
+  }
+
+  public archiveIdea(id: string) {
+    this.updateIdea(id, { isArchived: true, status: 'Archived' } as any);
+  }
+
+  public restoreIdea(id: string) {
+    this.updateIdea(id, { isArchived: false, isDeleted: false, status: 'Draft' } as any);
+  }
+
+  public softDeleteIdea(id: string) {
+    this.updateIdea(id, { isDeleted: true } as any);
   }
 }
 

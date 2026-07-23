@@ -1,6 +1,7 @@
 import { useState, useEffect, FormEvent, MouseEvent as ReactMouseEvent } from "react";
 import { Project } from "../types";
-import { FolderGit2, Plus, Sparkles, FolderLock, Trash2 } from "lucide-react";
+import { FolderGit2, Plus, Sparkles, FolderLock, Trash2, CloudCheck } from "lucide-react";
+import { usePhase1BSync } from "../hooks/usePhase1BSync";
 
 interface ProjectsPanelProps {
   onSelectProject: (project: Project) => void;
@@ -11,6 +12,7 @@ export default function ProjectsPanel({ onSelectProject }: ProjectsPanelProps) {
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
+  const { syncCreateProject, syncSoftDeleteProject, syncUpdateProject, cloudSyncActive } = usePhase1BSync();
 
   useEffect(() => {
     const stored = localStorage.getItem("aurora_projects_v2");
@@ -83,6 +85,7 @@ export default function ProjectsPanel({ onSelectProject }: ProjectsPanelProps) {
     const updated = [...projects, added];
     setProjects(updated);
     localStorage.setItem("aurora_projects_v2", JSON.stringify(updated));
+    syncCreateProject(added);
     setNewProjectName("");
     setNewProjectDesc("");
     setShowAddForm(false);
@@ -110,6 +113,7 @@ export default function ProjectsPanel({ onSelectProject }: ProjectsPanelProps) {
 
     setProjects(updated);
     localStorage.setItem("aurora_projects_v2", JSON.stringify(updated));
+    syncSoftDeleteProject(id);
   };
 
   return (

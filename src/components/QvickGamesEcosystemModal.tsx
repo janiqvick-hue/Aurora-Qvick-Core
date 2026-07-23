@@ -40,8 +40,13 @@ import {
   Plus,
   Tag,
   Send,
-  Check
+  Check,
+  Archive,
+  Trash2,
+  RotateCcw,
+  Cloud
 } from "lucide-react";
+import { usePhase1BSync } from "../hooks/usePhase1BSync";
 
 interface QvickGamesEcosystemModalProps {
   isOpen: boolean;
@@ -57,6 +62,19 @@ export default function QvickGamesEcosystemModal({
   onSelectProject
 }: QvickGamesEcosystemModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+
+  const {
+    cloudSyncActive,
+    syncCreateKnowledgeItem,
+    syncArchiveKnowledgeItem,
+    syncRestoreKnowledgeItem,
+    syncSoftDeleteKnowledgeItem,
+    syncCreateIdeaItem,
+    syncUpdateIdeaStatus,
+    syncArchiveIdeaItem,
+    syncRestoreIdeaItem,
+    syncSoftDeleteIdeaItem
+  } = usePhase1BSync();
 
   // Search tab state
   const [searchQuery, setSearchQuery] = useState("");
@@ -104,7 +122,7 @@ export default function QvickGamesEcosystemModal({
   const handleAddKbArticle = (e: React.FormEvent) => {
     e.preventDefault();
     if (newKbTitle.trim() && newKbContent.trim()) {
-      knowledgeLibraryEngine.addArticle({
+      const created = knowledgeLibraryEngine.addArticle({
         title: newKbTitle,
         category: newKbCategory,
         summary: newKbSummary || newKbContent.substring(0, 100),
@@ -112,6 +130,18 @@ export default function QvickGamesEcosystemModal({
         tags: [newKbCategory, "KnowledgeBase"],
         author: profile.leadName
       });
+
+      // Background cloud sync
+      syncCreateKnowledgeItem({
+        id: created.id,
+        title: created.title,
+        category: created.category,
+        summary: created.summary,
+        content: created.content,
+        tags: created.tags,
+        author: created.author
+      });
+
       setNewKbTitle("");
       setNewKbSummary("");
       setNewKbContent("");
@@ -119,14 +149,51 @@ export default function QvickGamesEcosystemModal({
     }
   };
 
+  const handleArchiveKbArticle = (id: string) => {
+    knowledgeLibraryEngine.archiveArticle(id);
+    syncArchiveKnowledgeItem(id);
+  };
+
+  const handleSoftDeleteKbArticle = (id: string) => {
+    knowledgeLibraryEngine.softDeleteArticle(id);
+    syncSoftDeleteKnowledgeItem(id);
+  };
+
   const handleAddIdea = (e: React.FormEvent) => {
     e.preventDefault();
     if (newIdeaTitle.trim() && newIdeaDescription.trim()) {
-      ideaVaultEngine.addIdea(newIdeaTitle, newIdeaCategory, newIdeaDescription, newIdeaImpact);
+      const created = ideaVaultEngine.addIdea(newIdeaTitle, newIdeaCategory, newIdeaDescription, newIdeaImpact);
+      
+      // Background cloud sync
+      syncCreateIdeaItem({
+        id: created.id,
+        title: created.title,
+        category: created.category,
+        description: created.description,
+        tags: created.tags,
+        status: created.status,
+        impact: created.impact
+      });
+
       setNewIdeaTitle("");
       setNewIdeaDescription("");
       setShowAddIdeaForm(false);
     }
+  };
+
+  const handleUpdateIdeaStatus = (id: string, status: any) => {
+    ideaVaultEngine.updateIdeaStatus(id, status);
+    syncUpdateIdeaStatus(id, status);
+  };
+
+  const handleArchiveIdea = (id: string) => {
+    ideaVaultEngine.archiveIdea(id);
+    syncArchiveIdeaItem(id);
+  };
+
+  const handleSoftDeleteIdea = (id: string) => {
+    ideaVaultEngine.softDeleteIdea(id);
+    syncSoftDeleteIdeaItem(id);
   };
 
   const docSummary = documentationAssistantEngine.generateProjectDocSummary(selectedDocProject);
@@ -773,12 +840,28 @@ export default function QvickGamesEcosystemModal({
                 {knowledgeLibraryEngine.getAllArticles()
                   .filter(a => selectedKbCategory === 'All' || a.category === selectedKbCategory)
                   .map(art => (
-                    <div key={art.id} className="p-4 bg-[#140b05] rounded-xl border border-[#3d2b1d] hover:border-amber-500/30 space-y-2 transition-all">
+                    <div key={art.id} className="p-4 bg-[#140b05] rounded-xl border border-[#3d2b1d] hover:border-amber-500/30 space-y-2 transition-all relative group">
                       <div className="flex justify-between items-center">
                         <span className="text-[10px] font-mono text-amber-400 bg-[#0b0603] px-2 py-0.5 rounded border border-[#3d2b1d] font-bold">
                           {art.category}
                         </span>
-                        <span className="text-[10px] font-mono text-stone-500">{art.lastUpdated}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono text-stone-500">{art.lastUpdated}</span>
+                          <button
+                            onClick={() => handleArchiveKbArticle(art.id)}
+                            title="Arkistoi artikkeli"
+                            className="p-1 hover:bg-amber-500/20 text-stone-400 hover:text-amber-300 rounded cursor-pointer transition-colors"
+                          >
+                            <Archive className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleSoftDeleteKbArticle(art.id)}
+                            title="Poista artikkeli"
+                            className="p-1 hover:bg-rose-500/20 text-stone-400 hover:text-rose-400 rounded cursor-pointer transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <h4 className="font-bold text-amber-200 text-sm">{art.title}</h4>
                       <p className="text-xs text-stone-300 font-sans leading-relaxed">{art.summary}</p>
@@ -901,15 +984,37 @@ export default function QvickGamesEcosystemModal({
                         <span className="text-[10px] font-mono text-amber-400 bg-[#0b0603] px-2 py-0.5 rounded border border-[#3d2b1d] font-bold">
                           {idea.category}
                         </span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[9px] font-mono text-stone-400 bg-[#0b0603] px-1.5 py-0.5 rounded">
-                            {idea.status}
-                          </span>
+                        <div className="flex items-center gap-1.5">
+                          <select
+                            value={idea.status}
+                            onChange={(e) => handleUpdateIdeaStatus(idea.id, e.target.value)}
+                            className="text-[9px] font-mono text-amber-300 bg-[#0b0603] border border-[#3d2b1d] px-1.5 py-0.5 rounded focus:outline-none cursor-pointer"
+                          >
+                            <option value="Draft">Draft</option>
+                            <option value="In Evaluation">In Evaluation</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Archived">Archived</option>
+                          </select>
                           <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
                             idea.impact === 'High' ? "text-amber-400 bg-amber-950" : "text-stone-400 bg-[#0b0603]"
                           }`}>
                             {idea.impact}
                           </span>
+                          <button
+                            onClick={() => handleArchiveIdea(idea.id)}
+                            title="Arkistoi idea"
+                            className="p-1 hover:bg-amber-500/20 text-stone-400 hover:text-amber-300 rounded cursor-pointer transition-colors"
+                          >
+                            <Archive className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleSoftDeleteIdea(idea.id)}
+                            title="Poista idea"
+                            className="p-1 hover:bg-rose-500/20 text-stone-400 hover:text-rose-400 rounded cursor-pointer transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                       <h4 className="font-bold text-amber-200 text-sm">{idea.title}</h4>
