@@ -51,9 +51,29 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
-      // Memories collection
+      // Memories collection (Phase 2.1.2 Hardened Rules)
       match /memories/{memoryId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && request.resource.data.id is string
+          && request.resource.data.schemaVersion is number
+          && request.resource.data.keys().hasOnly([
+            'id', 'memoryType', 'title', 'content', 'summary',
+            'importance', 'confidence', 'sourceType', 'sourceId',
+            'relatedProjectIds', 'relatedConversationId', 'tags',
+            'occurredAt', 'isPinned', 'isArchived', 'isDeleted',
+            'embeddingStatus', 'embeddingModel', 'embeddingModelVersion',
+            'schemaVersion', 'syncStatus', 'localUpdatedAt',
+            'cloudUpdatedAt', 'lastSyncedAt', 'createdAt', 'updatedAt', 'deletedAt'
+          ])
+          && (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() <= 1000))
+          && (!('content' in request.resource.data) || (request.resource.data.content is string && request.resource.data.content.size() <= 100000))
+          && (!('importance' in request.resource.data) || (request.resource.data.importance is number && request.resource.data.importance >= 0 && request.resource.data.importance <= 100))
+          && (!('confidence' in request.resource.data) || (request.resource.data.confidence is number && request.resource.data.confidence >= 0 && request.resource.data.confidence <= 1))
+          && (!('tags' in request.resource.data) || request.resource.data.tags is list)
+          && (!('isArchived' in request.resource.data) || request.resource.data.isArchived is bool)
+          && (!('isDeleted' in request.resource.data) || request.resource.data.isDeleted is bool);
+        allow delete: if false; // Hard delete denied for cloud data safety (soft delete via update is allowed)
       }
     }
 

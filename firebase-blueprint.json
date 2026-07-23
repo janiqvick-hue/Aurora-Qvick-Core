@@ -186,6 +186,10 @@
         "embeddingStatus": { "type": "string" },
         "embeddingModel": { "type": "string" },
         "embeddingModelVersion": { "type": "string" },
+        "syncStatus": { "type": "string" },
+        "localUpdatedAt": { "type": "string" },
+        "cloudUpdatedAt": { "type": "string" },
+        "lastSyncedAt": { "type": "string" },
         "schemaVersion": { "type": "number" },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
