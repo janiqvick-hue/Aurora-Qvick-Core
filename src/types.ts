@@ -11,6 +11,12 @@ export interface Memory {
   createdAt: string;
   category?: MemoryCategory;
   tags?: string[];
+  syncStatus?: 'local_only' | 'pending_sync' | 'synced' | 'conflict' | 'sync_error';
+  localUpdatedAt?: string;
+  cloudUpdatedAt?: string;
+  lastSyncedAt?: string | null;
+  isArchived?: boolean;
+  isDeleted?: boolean;
 }
 
 export type MemoryCategory = 

@@ -13,8 +13,14 @@ export default function MemoryPanel({ onMemoriesChange }: MemoryPanelProps) {
   const [category, setCategory] = useState<MemoryCategory>("Personal");
 
   useEffect(() => {
-    const list = auroraMemoryEngine.getMemories();
-    setMemories(list);
+    const loadMemories = () => {
+      const list = auroraMemoryEngine.getMemories();
+      setMemories(list);
+    };
+    loadMemories();
+
+    window.addEventListener('aurora_memories_updated', loadMemories);
+    return () => window.removeEventListener('aurora_memories_updated', loadMemories);
   }, []);
 
   const handleAddMemory = (e: FormEvent) => {

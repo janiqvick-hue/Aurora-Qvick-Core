@@ -59,8 +59,11 @@ import {
   restoreMemory,
   softDeleteMemory,
   subscribeMemories,
+  flushMemorySyncQueue,
+  toComparableMs,
   CloudMemoryData
 } from '../firebase/memoryService';
+import { memoryTypeToCategory } from '../core/CloudMemorySyncAdapter';
 
 export function usePhase1BSync() {
   const { user, isFirebaseAvailable } = useAuth();
@@ -235,35 +238,106 @@ export function usePhase1BSync() {
     return () => unsubscribe();
   }, [user, isFirebaseAvailable]);
 
-  // 7. Memory Cloud Foundation Listener & Sync
+  // 7. Memory Cloud Foundation Listener & Sync (Phase 2.1 & 2.1.1 Lifecycle Safe)
   useEffect(() => {
     if (!user || !isFirebaseAvailable) return;
+
+    // Flush any pending queue operations when connected/authenticated
+    flushMemorySyncQueue(user.uid).catch((err) =>
+      console.warn("Queue flush on connect notice:", err)
+    );
+
+    // Register browser online event for network recovery queue flush (Phase 2.1.1 Task 5)
+    const handleOnline = () => {
+      if (user && isFirebaseAvailable) {
+        flushMemorySyncQueue(user.uid).catch((err) =>
+          console.warn("Queue flush on network recovery notice:", err)
+        );
+      }
+    };
+    window.addEventListener('online', handleOnline);
 
     const unsubscribe = subscribeMemories(
       user.uid,
       (cloudMemories) => {
-        if (cloudMemories && cloudMemories.length > 0) {
-          try {
-            const stored = localStorage.getItem('aurora_memory_v1');
-            let localList: any[] = stored ? JSON.parse(stored) : [];
+        if (!cloudMemories) return;
 
-            const mergedMap = new Map<string, any>();
-            localList.forEach((mem) => mergedMap.set(mem.id, mem));
-            cloudMemories.forEach((cm) => {
-              const existing = mergedMap.get(cm.id) || {};
-              mergedMap.set(cm.id, { ...existing, ...cm });
-            });
+        try {
+          const stored = localStorage.getItem('aurora_persistent_memories_v4');
+          let localList: any[] = stored ? JSON.parse(stored) : [];
 
+          const mergedMap = new Map<string, any>();
+          localList.forEach((mem) => mergedMap.set(mem.id, mem));
+
+          let changeDetected = false;
+
+          cloudMemories.forEach((cm) => {
+            const existing = mergedMap.get(cm.id);
+            const contentText = cm.content || cm.summary || cm.title || '';
+            const mappedCategory = memoryTypeToCategory(cm.memoryType);
+
+            const mappedFromCloud = {
+              id: cm.id,
+              text: contentText,
+              category: mappedCategory,
+              createdAt: cm.occurredAt || (typeof cm.createdAt === 'string' ? cm.createdAt : new Date().toISOString()),
+              isArchived: cm.isArchived || false,
+              isDeleted: cm.isDeleted || false,
+              syncStatus: 'synced' as const,
+              cloudUpdatedAt: cm.cloudUpdatedAt || new Date().toISOString(),
+              localUpdatedAt: cm.localUpdatedAt || new Date().toISOString()
+            };
+
+            if (!existing) {
+              if (!cm.isDeleted) {
+                mergedMap.set(cm.id, mappedFromCloud);
+                changeDetected = true;
+              }
+            } else {
+              const isUnsyncedLocal = existing.syncStatus === 'pending_sync';
+              const localTime = toComparableMs(existing.localUpdatedAt || existing.updatedAt);
+              const cloudTime = toComparableMs(cm.cloudUpdatedAt || cm.updatedAt);
+
+              if (isUnsyncedLocal && localTime > cloudTime) {
+                // Keep unsynced local changes temporarily until synced
+              } else if (isUnsyncedLocal && cloudTime > localTime && existing.text !== mappedFromCloud.text) {
+                // Both modified independently -> preserve cloud version and create recoverable local conflict copy
+                const conflictCopy = {
+                  ...existing,
+                  id: `${existing.id}-conflict-${Date.now()}`,
+                  text: `${existing.text} (Paikallinen Ristiriitakopio)`,
+                  syncStatus: 'conflict',
+                  localUpdatedAt: new Date().toISOString()
+                };
+                mergedMap.set(conflictCopy.id, conflictCopy);
+                mergedMap.set(cm.id, mappedFromCloud);
+                changeDetected = true;
+              } else {
+                mergedMap.set(cm.id, {
+                  ...existing,
+                  ...mappedFromCloud
+                });
+                changeDetected = true;
+              }
+            }
+          });
+
+          if (changeDetected) {
             const mergedList = Array.from(mergedMap.values());
-            localStorage.setItem('aurora_memory_v1', JSON.stringify(mergedList));
-          } catch (e) {
-            console.warn("Failed merging cloud memories into localStorage:", e);
+            localStorage.setItem('aurora_persistent_memories_v4', JSON.stringify(mergedList));
+            window.dispatchEvent(new CustomEvent('aurora_memories_updated'));
           }
+        } catch (e) {
+          console.warn("Failed merging cloud memories into localStorage:", e);
         }
-      }
+      },
+      (err) => console.warn("Memory subscription listener warning:", err)
     );
 
-    return () => unsubscribe();
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      unsubscribe();
+    };
   }, [user, isFirebaseAvailable]);
 
   // --- Project Sync Helpers ---
@@ -603,6 +677,16 @@ export function usePhase1BSync() {
     }
   }, [user, isFirebaseAvailable]);
 
+  const syncFlushMemoryQueue = useCallback(async () => {
+    if (user && isFirebaseAvailable) {
+      try {
+        await flushMemorySyncQueue(user.uid);
+      } catch (err) {
+        console.warn("Manual flushMemorySyncQueue failed:", err);
+      }
+    }
+  }, [user, isFirebaseAvailable]);
+
   return {
     cloudSyncActive,
     syncStatus,
@@ -639,5 +723,6 @@ export function usePhase1BSync() {
     syncArchiveMemory,
     syncRestoreMemory,
     syncSoftDeleteMemory,
+    syncFlushMemoryQueue,
   };
 }

@@ -41,8 +41,14 @@ export default function MemoryBrowser({ onMemoriesChange }: MemoryBrowserProps) 
   const [newMemoryCategory, setNewMemoryCategory] = useState<MemoryCategory>('Projects');
 
   useEffect(() => {
-    const list = auroraMemoryEngine.getMemories();
-    setMemories(list);
+    const loadMemories = () => {
+      const list = auroraMemoryEngine.getMemories();
+      setMemories(list);
+    };
+    loadMemories();
+
+    window.addEventListener('aurora_memories_updated', loadMemories);
+    return () => window.removeEventListener('aurora_memories_updated', loadMemories);
   }, []);
 
   const handleAddMemory = (e: FormEvent) => {

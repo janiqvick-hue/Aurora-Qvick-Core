@@ -1,4 +1,7 @@
 import { Memory, MemoryCategory } from "../types";
+import { cloudMemorySyncAdapter } from "./CloudMemorySyncAdapter";
+
+export const AURORA_MEMORY_STORAGE_KEY = "aurora_persistent_memories_v4";
 
 export const PRESET_MEMORIES: { text: string; category: MemoryCategory; createdAt?: string }[] = [
   // 1. Studies & Certificates
@@ -80,9 +83,9 @@ export const PRESET_MEMORIES: { text: string; category: MemoryCategory; createdA
 ];
 
 class AuroraMemoryEngine {
-  private STORAGE_KEY = "aurora_persistent_memories_v4";
+  private STORAGE_KEY = AURORA_MEMORY_STORAGE_KEY;
 
-  public getMemories(): Memory[] {
+  public getAllRawMemories(): Memory[] {
     const stored = localStorage.getItem(this.STORAGE_KEY);
     if (stored) {
       try {
@@ -95,12 +98,23 @@ class AuroraMemoryEngine {
     return this.resetToDefaults();
   }
 
+  public getMemories(includeArchived = false, includeDeleted = false): Memory[] {
+    const all = this.getAllRawMemories();
+    return all.filter(m => {
+      if (!includeDeleted && (m as any).isDeleted) return false;
+      if (!includeArchived && (m as any).isArchived) return false;
+      return true;
+    });
+  }
+
   public resetToDefaults(): Memory[] {
     const initialized: Memory[] = PRESET_MEMORIES.map((m, idx) => ({
       id: `mem-init-${idx}-${Date.now()}`,
       text: m.text,
       category: m.category,
-      createdAt: m.createdAt || new Date(Date.now() - idx * 3600000 * 12).toISOString()
+      createdAt: m.createdAt || new Date(Date.now() - idx * 3600000 * 12).toISOString(),
+      syncStatus: 'local_only',
+      localUpdatedAt: new Date().toISOString()
     }));
 
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(initialized));
@@ -108,23 +122,128 @@ class AuroraMemoryEngine {
   }
 
   public saveMemory(text: string, category: MemoryCategory = 'Personal'): Memory[] {
-    const memories = this.getMemories();
+    const allRaw = this.getAllRawMemories();
+    const nowIso = new Date().toISOString();
     const newMem: Memory = {
       id: `mem-${Date.now()}`,
       text: text.trim(),
       category,
-      createdAt: new Date().toISOString()
-    };
-    const updated = [newMem, ...memories];
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
-    return updated;
+      createdAt: nowIso,
+      syncStatus: 'pending_sync',
+      localUpdatedAt: nowIso,
+      isArchived: false,
+      isDeleted: false
+    } as any;
+
+    const updatedRaw = [newMem, ...allRaw];
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedRaw));
+
+    // Non-blocking dual-write trigger
+    cloudMemorySyncAdapter.queueMemoryCreate(newMem);
+
+    return this.getMemories();
+  }
+
+  public updateMemory(id: string, text: string, category?: MemoryCategory): Memory[] {
+    const allRaw = this.getAllRawMemories();
+    const nowIso = new Date().toISOString();
+    let updatedMem: Memory | null = null;
+
+    const updatedRaw = allRaw.map(m => {
+      if (m.id === id) {
+        updatedMem = {
+          ...m,
+          text: text.trim(),
+          category: category || m.category,
+          syncStatus: 'pending_sync',
+          localUpdatedAt: nowIso
+        } as any;
+        return updatedMem;
+      }
+      return m;
+    });
+
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedRaw));
+
+    if (updatedMem) {
+      cloudMemorySyncAdapter.queueMemoryUpdate(id, updatedMem);
+    }
+
+    return this.getMemories();
+  }
+
+  public archiveMemory(id: string): Memory[] {
+    const allRaw = this.getAllRawMemories();
+    const nowIso = new Date().toISOString();
+
+    const updatedRaw = allRaw.map(m => {
+      if (m.id === id) {
+        return {
+          ...m,
+          isArchived: true,
+          syncStatus: 'pending_sync',
+          localUpdatedAt: nowIso
+        };
+      }
+      return m;
+    });
+
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedRaw));
+
+    // Non-blocking background queueing
+    cloudMemorySyncAdapter.queueMemoryArchive(id);
+
+    return this.getMemories();
+  }
+
+  public restoreMemory(id: string): Memory[] {
+    const allRaw = this.getAllRawMemories();
+    const nowIso = new Date().toISOString();
+
+    const updatedRaw = allRaw.map(m => {
+      if (m.id === id) {
+        return {
+          ...m,
+          isArchived: false,
+          isDeleted: false,
+          syncStatus: 'pending_sync',
+          localUpdatedAt: nowIso
+        };
+      }
+      return m;
+    });
+
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedRaw));
+
+    // Non-blocking background queueing
+    cloudMemorySyncAdapter.queueMemoryRestore(id);
+
+    return this.getMemories();
   }
 
   public deleteMemory(id: string): Memory[] {
-    const memories = this.getMemories();
-    const updated = memories.filter(m => m.id !== id);
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
-    return updated;
+    const allRaw = this.getAllRawMemories();
+    const nowIso = new Date().toISOString();
+
+    // Mark soft deleted in raw list to preserve sync record
+    const updatedRaw = allRaw.map(m => {
+      if (m.id === id) {
+        return {
+          ...m,
+          isDeleted: true,
+          syncStatus: 'pending_sync',
+          localUpdatedAt: nowIso
+        };
+      }
+      return m;
+    });
+
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedRaw));
+
+    // Non-blocking background queueing
+    cloudMemorySyncAdapter.queueMemorySoftDelete(id);
+
+    return this.getMemories();
   }
 
   public searchMemories(query: string, category?: string): Memory[] {
@@ -185,3 +304,4 @@ class AuroraMemoryEngine {
 }
 
 export const auroraMemoryEngine = new AuroraMemoryEngine();
+
